@@ -79,7 +79,7 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
         self.stage_sigs[self.file_template] = '%s%s_%6.6d.h5'
 
         self._filestore_res = None
-        self.channels = list(range(1, len([_ for _ in det.signal_names
+        self.channels = list(range(1, len([_ for _ in det.component_names
                                            if _.startswith('chan')]) + 1))
         # this was in original code, but I kinda-sorta nuked because
         # it was not needed for SRX and I could not guess what it did
