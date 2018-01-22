@@ -6,6 +6,7 @@ from cycler import cycler
 from boltons.iterutils import chunked
 
 from bluesky import (plans, Msg)
+import bluesky.preprocessors as bpp
 from bluesky import plan_patterns
 
 from ophyd import (Device, Component as Cpt, EpicsSignal)
@@ -193,18 +194,24 @@ def absolute_mesh(dets, *args, time=None, md=None):
         args, time = args[:-1], args[-1]
 
     total_points = 1
+    new_args = []
+    add_snake = False
     for motor, start, stop, num in chunked(args, 4):
         total_points *= num
+        new_args += [motor, start, stop, num]
+        if add_snake:
+            new_args += [False]
+        add_snake = True
 
     yield from _pre_scan(dets, total_points=total_points, count_time=time)
-    return (yield from plans.outer_product_scan(dets, *args, md=md))
+    return (yield from plans.outer_product_scan(dets, *new_args, md=md))
 
 
 @functools.wraps(absolute_mesh)
 def relative_mesh(dets, *args, time=None, md=None):
     plan = absolute_mesh(dets, *args, time=time, md=md)
-    plan = plans.relative_set(plan)  # re-write trajectory as relative
-    return (yield from plans.reset_positions(plan))
+    plan = bpp.relative_set_wrapper(plan)  # re-write trajectory as relative
+    return (yield from bpp.reset_positions_wrapper(plan))
 
 
 def _get_a2_args(*args, time=None):
