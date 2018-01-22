@@ -9,13 +9,13 @@ from ophyd.areadetector.filestore_mixins import (
     FileStoreIterativeWrite, FileStoreTIFF, FileStorePluginBase)
 
 from .utils import makedirs
-from .trigger_mixins import HxnModalTrigger
+from .trigger_mixins import (HxnModalTrigger, FileStoreBulkReadable)
 
 
 logger = logging.getLogger(__name__)
 
 
-class MerlinTiffPlugin(TIFFPlugin, FileStoreIterativeWrite, FileStoreTIFF,
+class MerlinTiffPlugin(TIFFPlugin, FileStoreBulkReadable, FileStoreTIFF,
                        Device):
     def mode_external(self):
         total_points = self.parent.mode_settings.total_points.get()
@@ -41,7 +41,7 @@ class MerlinDetector(AreaDetector):
               )
 
 
-class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreIterativeWrite):
+class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
     _spec = 'TPX_HDF5'
 
     def __init__(self, *args, **kwargs):
