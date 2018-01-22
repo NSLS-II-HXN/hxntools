@@ -150,7 +150,7 @@ class HxnModalTrigger(HxnModalBase, TriggerBase):
         return self._status
 
     def trigger(self):
-        mode_trigger = getattr(self, 'trigger_{}'.format(self.mode))
+        mode_trigger = getattr(self, f'trigger_{self.mode}')
         return mode_trigger()
 
     def _acquire_changed(self, value=None, old_value=None, **kwargs):

@@ -89,17 +89,13 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
         self.mds_keys = {chan: mds_key_format.format(self=self, chan=chan)
                          for chan in self.channels}
 
-    def _get_datum_args(self, seq_num):
-        for chan in self.channels:
-            yield {'frame': seq_num - 1, 'channel': chan}
-
     def read(self):
         timestamp = time.time()
-        uids = [str(uuid.uuid4()) for ch in self.channels]
 
-        self._reg.bulk_register_datum_list(
-            self._filestore_res, uids,
-            self._get_datum_args(self.parent._abs_trigger_count))
+        uids = [self._reg.register_datum(
+            self._filestore_res, {'frame': self.parent._abs_trigger_count -1,
+                                  'channel': chan})
+                for chan in self.channels]
 
         return {self.mds_keys[ch]: {'timestamp': timestamp,
                                     'value': uid,
@@ -209,7 +205,8 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
 
         logger.debug('Inserting the filestore resource: %s', self._fn)
         fn = PurePath(self._fn).relative_to(self.reg_root)
-        self._filestore_res = self._reg.register_resource(
+        # parent class expects _resource
+        self._resource = self._filestore_res = self._reg.register_resource(
             Xspress3HDF5Handler.HANDLER_NAME,
             str(self.reg_root), str(fn),
             {})
@@ -234,14 +231,8 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
         spec_desc = {'external': 'FILESTORE:',
                      'dtype': 'array',
                      'shape': size,
+                     'source': 'FileStore:'
                      }
-        # shouldn't the source be the array PV?
-        if self._filestore_res is not None:
-            source = 'FileStore::{!s}'.format(self._filestore_res['id'])
-        else:
-            source = 'FileStore:'
-
-        spec_desc['source'] = source
 
         desc = OrderedDict()
         for chan in self.channels:
