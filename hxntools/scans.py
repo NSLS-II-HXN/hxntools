@@ -7,6 +7,7 @@ from boltons.iterutils import chunked
 
 from bluesky import (plans, Msg)
 import bluesky.preprocessors as bpp
+import bluesky.plan_stubs as bps
 from bluesky import plan_patterns
 
 from ophyd import (Device, Component as Cpt, EpicsSignal)
@@ -35,6 +36,36 @@ dev_scan_id = ScanID('XF:03IDC-ES{Status}', name='dev_scan_id')
 def get_next_scan_id():
     dev_scan_id.wait_for_connection()
     return dev_scan_id.get_next_scan_id()
+
+
+def one_nd_step(detectors, step, pos_cache):
+    """
+    Inner loop of an N-dimensional step scan
+
+    This is the default function for ``per_step`` param`` in ND plans.
+
+    Parameters
+    ----------
+    detectors : iterable
+        devices to read
+    step : dict
+        mapping motors to positions in this step
+    pos_cache : dict
+        mapping motors to their last-set positions
+    """
+    def move():
+        yield Msg('checkpoint')
+        for motor, pos in step.items():
+            if pos == pos_cache[motor]:
+                # This step does not move this motor.
+                continue
+            yield from bps.mov(motor, pos)
+            pos_cache[motor] = pos
+
+    motors = step.keys()
+    yield from move()
+    yield from bps.trigger_and_read(list(detectors) + list(motors))
+
 
 
 @asyncio.coroutine
@@ -204,7 +235,8 @@ def absolute_mesh(dets, *args, time=None, md=None):
         add_snake = True
 
     yield from _pre_scan(dets, total_points=total_points, count_time=time)
-    return (yield from plans.outer_product_scan(dets, *new_args, md=md))
+    return (yield from plans.outer_product_scan(dets, *new_args, md=md,
+                                                per_step=one_nd_step))
 
 
 @functools.wraps(absolute_mesh)
@@ -228,7 +260,8 @@ def a2scan(dets, *args, time=None, md=None):
     args, time = _get_a2_args(*args, time=time)
     total_points = int(args[-1])
     yield from _pre_scan(dets, total_points=total_points, count_time=time)
-    return (yield from plans.inner_product_scan(dets, *args, md=md))
+    return (yield from plans.inner_product_scan(dets, *args, md=md,
+                                                per_step=one_nd_step))
 
 
 @functools.wraps(plans.relative_inner_product_scan)
@@ -236,7 +269,8 @@ def d2scan(dets, *args, time=None, md=None):
     args, time = _get_a2_args(*args, time=time)
     total_points = int(args[-1])
     yield from _pre_scan(dets, total_points=total_points, count_time=time)
-    return (yield from plans.relative_inner_product_scan(dets, *args, md=md))
+    return (yield from plans.relative_inner_product_scan(dets, *args, md=md,
+                                                         per_step=one_nd_step))
 
 
 def scan_steps(dets, *args, time=None, per_step=None, md=None):
