@@ -9,15 +9,15 @@ from ophyd.areadetector import (EpicsSignalWithRBV as SignalWithRBV)
 from ophyd.areadetector.filestore_mixins import (
     FileStoreIterativeWrite, FileStoreTIFF, FileStorePluginBase)
 
-from .utils import makedirs
-from .trigger_mixins import HxnModalTrigger
+from .utils import (makedirs, make_filename_add_subdirectory)
+from .trigger_mixins import (HxnModalTrigger, FileStoreBulkReadable)
 
 from pathlib import PurePath
 
 logger = logging.getLogger(__name__)
 
 
-class DexelaTiffPlugin(TIFFPlugin, FileStoreIterativeWrite, FileStoreTIFF,
+class DexelaTiffPlugin(TIFFPlugin, FileStoreBulkReadable, FileStoreTIFF,
                        Device):
     def mode_external(self):
         total_points = self.parent.mode_settings.total_points.get()
@@ -68,7 +68,7 @@ class DexelaDetector(AreaDetector):
               )
 
 
-class DexelaFileStoreHDF5(FileStorePluginBase, FileStoreIterativeWrite):
+class DexelaFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
     _spec = 'TPX_HDF5'
 
     def __init__(self, *args, **kwargs):
@@ -83,10 +83,10 @@ class DexelaFileStoreHDF5(FileStorePluginBase, FileStoreIterativeWrite):
         staged = super().stage()
         res_kwargs = {'frame_per_point': 1}
         logger.debug("Inserting resource with filename %s", self._fn)
-        fn = PurePath(self._fn).relative_to(self.fs_root)
+        fn = PurePath(self._fn).relative_to(self.reg_root)
         self._resource = self._reg.register_resource(
             self.filestore_spec,
-            str(self.fs_root), str(fn),
+            str(self.reg_root), str(fn),
             res_kwargs)
 
         return staged

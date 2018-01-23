@@ -11,7 +11,7 @@ from ophyd import (Device, Component as Cpt, AreaDetector, TIFFPlugin,
 from ophyd import (EpicsSignal, EpicsSignalRO)
 from ophyd.areadetector import (EpicsSignalWithRBV as SignalWithRBV, CamBase)
 from .utils import makedirs
-from .trigger_mixins import HxnModalTrigger
+from .trigger_mixins import (HxnModalTrigger, FileStoreBulkReadable)
 
 
 logger = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ class TimepixDetector(HxnModalTrigger, AreaDetector):
                            'reliably')
 
 
-class TimepixTiffPlugin(TIFFPlugin, FileStoreIterativeWrite, FileStoreTIFF,
+class TimepixTiffPlugin(TIFFPlugin, FileStoreBulkReadable, FileStoreTIFF,
                         Device):
     def mode_external(self):
         total_points = self.parent.mode_settings.total_points.get()
@@ -126,10 +126,10 @@ class TimepixFileStoreHDF5(FileStorePluginBase, FileStoreIterativeWrite):
         staged = super().stage()
         res_kwargs = {'frame_per_point': 1}
         logger.debug("Inserting resource with filename %s", self._fn)
-        fn = PurePath(self._fn).relative_to(self.fs_root)
+        fn = PurePath(self._fn).relative_to(self.reg_root)
         self._resource = self._reg.register_resource(
             self._spec,
-            str(self.fs_root), str(fn),
+            str(self.reg_root), str(fn),
             res_kwargs)
         return staged
 

@@ -1,12 +1,14 @@
 import time as ttime
-
+import itertools
 import logging
 
 from ophyd.device import (DeviceStatus, BlueskyInterface, Staged,
                           Component as Cpt, Device)
 from ophyd import (Signal, )
+from ophyd.areadetector.filestore_mixins import FileStoreIterativeWrite
 
-from .utils import (ordered_dict_move_to_beginning)
+
+from .utils import ordered_dict_move_to_beginning
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +152,7 @@ class HxnModalTrigger(HxnModalBase, TriggerBase):
         return self._status
 
     def trigger(self):
-        mode_trigger = getattr(self, 'trigger_{}'.format(self.mode))
+        mode_trigger = getattr(self, f'trigger_{self.mode}')
         return mode_trigger()
 
     def _acquire_changed(self, value=None, old_value=None, **kwargs):
@@ -160,3 +162,23 @@ class HxnModalTrigger(HxnModalBase, TriggerBase):
         if (old_value == 1) and (value == 0):
             # Negative-going edge means an acquisition just finished.
             self._status._finished()
+
+
+class FileStoreBulkReadable(FileStoreIterativeWrite):
+
+    def _reset_data(self):
+        self._datum_uids.clear()
+        self._point_counter = itertools.count()
+
+    def bulk_read(self, timestamps):
+        image_name = self.image_name
+
+        uids = [self.generate_datum(self.image_name, ts, {}) for ts in timestamps]
+
+        # clear so unstage will not save the images twice:
+        self._reset_data()
+        return {image_name: uids}
+
+    @property
+    def image_name(self):
+        return self.parent._image_name

@@ -17,6 +17,7 @@ from .xspress3 import (XspressTrigger, Xspress3Detector,
                        Xspress3FileStore, Xspress3ROI)
 from .trigger_mixins import HxnModalBase
 
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -129,22 +130,15 @@ class HxnXspress3DetectorBase(HxnXspressTrigger, Xspress3Detector):
             raise ValueError('Timestamps must be set first')
 
         channels = self.channels
-        ch_uids = {ch: [str(uuid.uuid4()) for ts in timestamps]
-                   for ch in channels}
-
         count = len(timestamps)
         if count == 0:
             return {}
 
-        def get_datum_args():
-            for ch in channels:
-                for seq_num in range(count):
-                    yield {'frame': seq_num,
-                           'channel': ch}
-
-        uids = [ch_uids[ch] for ch in channels]
-        self._reg.bulk_register_datum_list(
-            self._filestore_res, uids, get_datum_args())
+        ch_uids = {}
+        for ch in channels:
+            ch_uids[ch] = self.hdf5._reg.bulk_register_datum_table(
+                self.hdf5._filestore_res, pd.DataFrame({'frame': range(count),
+                                                        'channel': ch}))
 
         return OrderedDict((self.hdf5.mds_keys[ch], ch_uids[ch])
                            for ch in channels)
