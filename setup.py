@@ -19,7 +19,7 @@ setup(
     version="0.4.0",
     author='Brookhaven National Laboratory',
     packages=['hxntools', 'hxntools.detectors', 'hxntools.handlers'],
-    install_requires=['numpy>=1.8',
-                      'h5py>=2.5.0', 'databroker'],
+    install_requires=['numpy',
+                      'h5py', 'databroker'],
 
 )
