@@ -21,6 +21,7 @@ from ophyd.areadetector.plugins import PluginBase
 from ophyd.areadetector.filestore_mixins import FileStorePluginBase
 
 from ophyd.areadetector.plugins import HDF5Plugin
+from ophyd.areadetector import ADBase
 from ophyd.device import (BlueskyInterface, Staged)
 from ophyd.ophydobj import DeviceStatus
 
@@ -291,8 +292,17 @@ class Xspress3ROISettings(PluginBase):
     '''Full areaDetector plugin settings'''
     array_data = Cpt(EpicsSignalRO, 'ArrayData_RBV')
 
+    @property
+    def ad_root(self):
+        root = self.parent
+        while True:
+            if not isinstance(root.parent, ADBase):
+                return root
+            root = root.parent
 
-class Xspress3ROI(Device):
+
+
+class Xspress3ROI(ADBase):
     '''A configurable Xspress3 EPICS ROI'''
 
     # prefix: C{channel}_   MCA_ROI{self.roi_num}
@@ -309,6 +319,15 @@ class Xspress3ROI(Device):
 
     enable = Cpt(SignalWithRBV, 'EnableCallbacks')
     # ad_plugin = Cpt(Xspress3ROISettings, '')
+
+    @property
+    def ad_root(self):
+        root = self.parent
+        while True:
+            if not isinstance(root.parent, ADBase):
+                return root
+            root = root.parent
+
 
     def __init__(self, prefix, *, roi_num=0, use_sum=False,
                  read_attrs=None, configuration_attrs=None, parent=None,
@@ -417,7 +436,7 @@ def make_rois(rois):
     return defn
 
 
-class Xspress3Channel(Device):
+class Xspress3Channel(ADBase):
     roi_name_format = 'Det{self.channel_num}_{roi_name}'
     roi_sum_name_format = 'Det{self.channel_num}_{roi_name}_sum'
 
