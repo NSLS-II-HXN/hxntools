@@ -1,6 +1,6 @@
 # Since the hxntools.detectors.xspress3 module is now shared with srx, breaking
 # out the truly hxn-specific stuff here
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 import uuid
 import itertools
 import logging
@@ -157,7 +157,11 @@ class HxnXspress3DetectorBase(HxnXspressTrigger, Xspress3Detector):
             rois = self.enabled_rois
 
         num_points = self.settings.num_images.get()
-        RoiTuple = Xspress3ROI.get_device_tuple()
+        RoiTuple = namedtuple('Xspress3ROITuple',
+                              ['bin_low', 'bin_high',
+                               'ev_low', 'ev_high',
+                               'value', 'value_sum',
+                               'enable'])
 
         for roi in self.enabled_rois:
             try:
