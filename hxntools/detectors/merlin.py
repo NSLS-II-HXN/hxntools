@@ -43,6 +43,7 @@ class MerlinDetector(AreaDetector):
 
 class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
     _spec = 'TPX_HDF5'
+    filestore_spec = _spec
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,10 +57,7 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
         staged = super().stage()
         res_kwargs = {'frame_per_point': 1}
         logger.debug("Inserting resource with filename %s", self._fn)
-        fn = PurePath(self._fn).relative_to(self.reg_root)
-        self._resource = self._reg.register_resource(self._spec,
-                                                     str(self.reg_root), fn,
-                                                     res_kwargs)
+        self._generate_resource(res_kwargs)
 
         return staged
 
