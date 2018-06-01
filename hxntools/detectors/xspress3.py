@@ -202,6 +202,7 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
 
         logger.debug('Inserting the filestore resource: %s', self._fn)
         self._generate_resource({})
+        self._filestore_res = self._asset_docs_cache[-1][-1]
 
         # this gets auto turned off at the end
         self.capture.put(1)
