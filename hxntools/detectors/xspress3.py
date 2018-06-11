@@ -65,6 +65,7 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
     '''Xspress3 acquisition -> filestore'''
     num_capture_calc = Cpt(EpicsSignal, 'NumCapture_CALC')
     num_capture_calc_disable = Cpt(EpicsSignal, 'NumCapture_CALC.DISA')
+    filestore_spec = Xspress3HDF5Handler.HANDLER_NAME
 
     def __init__(self, basename, *, config_time=0.5,
                  mds_key_format='{self.settings.name}_ch{chan}', parent=None,
@@ -89,20 +90,6 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
         self._config_time = config_time
         self.mds_keys = {chan: mds_key_format.format(self=self, chan=chan)
                          for chan in self.channels}
-
-    def read(self):
-        timestamp = time.time()
-
-        uids = [self._reg.register_datum(
-            self._filestore_res, {'frame': self.parent._abs_trigger_count -1,
-                                  'channel': chan})
-                for chan in self.channels]
-
-        return {self.mds_keys[ch]: {'timestamp': timestamp,
-                                    'value': uid,
-                                    }
-                for uid, ch in zip(uids, self.channels)
-                }
 
     def stop(self, success=False):
         ret = super().stop(success=success)
@@ -143,6 +130,15 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
             logger.warning('Still capturing data .... interrupted.')
 
         return super().unstage()
+
+    def generate_datum(self, key, timestamp, datum_kwargs):
+        sn, n = next((f'channel{j}', j)
+                      for j in self.channels
+                      if getattr(self.parent, f'channel{j}').name == key)
+        datum_kwargs.update({'frame': self.parent._abs_trigger_count,
+                             'channel': int(sn[7:])})
+        self.mds_keys[n] = key
+        super().generate_datum(key, timestamp, datum_kwargs)
 
     def stage(self):
         # if should external trigger
@@ -205,12 +201,8 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
                           .format(self.file_path.value))
 
         logger.debug('Inserting the filestore resource: %s', self._fn)
-        fn = PurePath(self._fn).relative_to(self.reg_root)
-        # parent class expects _resource
-        self._resource = self._filestore_res = self._reg.register_resource(
-            Xspress3HDF5Handler.HANDLER_NAME,
-            str(self.reg_root), str(fn),
-            {})
+        self._generate_resource({})
+        self._filestore_res = self._asset_docs_cache[-1][-1]
 
         # this gets auto turned off at the end
         self.capture.put(1)
@@ -638,11 +630,12 @@ class XspressTrigger(BlueskyInterface):
         self._status = DeviceStatus(self)
         self.settings.erase.put(1)
         self._acquisition_signal.put(1, wait=False)
-        self._abs_trigger_count += 1
         trigger_time = ttime.time()
 
         for sn in self.read_attrs:
-            if sn.startswith('channel'):
+            if sn.startswith('channel') and '.' not in sn:
                 ch = getattr(self, sn)
                 self.dispatch(ch.name, trigger_time)
+
+        self._abs_trigger_count += 1
         return self._status
