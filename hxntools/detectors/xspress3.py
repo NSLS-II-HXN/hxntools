@@ -116,6 +116,9 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
             # this needs a fail-safe, RE will now hang forever here
             # as we eat all SIGINT to ensure that cleanup happens in
             # orderly manner.
+            # If we are here this is a sign that we have not configured the xs3
+            # correctly and it is expecting to capture more points than it
+            # was triggered to take.
             while self.capture.get() == 1:
                 i += 1
                 if (i % 50) == 0:
@@ -123,10 +126,14 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
                 time.sleep(0.1)
                 if i > 150:
                     logger.warning('Still capturing data .... giving up.')
+                    logger.warning('Check that the xspress3 is configure to take the right.'
+                                   'number of frames '
+                                   f'(it is trynig to take {self.parent.settings.num_images.get()})')
                     self.capture.put(0)
                     break
 
         except KeyboardInterrupt:
+            self.capture.put(0)
             logger.warning('Still capturing data .... interrupted.')
 
         return super().unstage()
