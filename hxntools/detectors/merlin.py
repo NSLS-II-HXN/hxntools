@@ -134,3 +134,5 @@ class HxnMerlinDetector(HxnModalTrigger, MerlinDetector):
         #       they should be set to < 0.5 the expected exposure time
         self.stage_sigs[self.cam.acquire_time] = 0.005
         self.stage_sigs[self.cam.acquire_period] = 0.0066392
+
+        self.cam.stage_sigs[self.cam.trigger_mode] = 'Trigger Enable'
