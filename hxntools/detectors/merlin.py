@@ -131,8 +131,11 @@ class HxnMerlinDetector(HxnModalTrigger, MerlinDetector):
         super().mode_external()
 
         # NOTE: these values specify a debounce time for external triggering so
-        #       they should be set to < 0.5 the expected exposure time
-        self.stage_sigs[self.cam.acquire_time] = 0.005
-        self.stage_sigs[self.cam.acquire_period] = 0.0066392
+        #       they should be set to < 0.5 the expected exposure time, or at
+        #       minimum the lowest possible dead time = 1.64ms
+        expected_exposure = 0.001
+        min_dead_time = 0.00164
+        self.stage_sigs[self.cam.acquire_time] = expected_exposure
+        self.stage_sigs[self.cam.acquire_period] = min_dead_time
 
         self.cam.stage_sigs[self.cam.trigger_mode] = 'Trigger Enable'
