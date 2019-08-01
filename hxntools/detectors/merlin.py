@@ -136,6 +136,6 @@ class HxnMerlinDetector(HxnModalTrigger, MerlinDetector):
         expected_exposure = 0.001
         min_dead_time = 0.00164
         self.stage_sigs[self.cam.acquire_time] = expected_exposure
-        self.stage_sigs[self.cam.acquire_period] = min_dead_time
+        self.stage_sigs[self.cam.acquire_period] = expected_exposure + min_dead_time
 
         self.cam.stage_sigs[self.cam.trigger_mode] = 'Trigger Enable'
