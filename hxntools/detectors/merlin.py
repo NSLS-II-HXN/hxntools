@@ -6,7 +6,7 @@ from ophyd import (AreaDetector, CamBase, TIFFPlugin, Component as Cpt,
                    ROIPlugin, TransformPlugin)
 
 from ophyd.areadetector.filestore_mixins import (
-    FileStoreIterativeWrite, FileStoreTIFF, FileStorePluginBase)
+    FileStoreTIFF, FileStorePluginBase)
 
 from .utils import makedirs
 from .trigger_mixins import (HxnModalTrigger, FileStoreBulkReadable)
