@@ -1,15 +1,18 @@
 from __future__ import print_function
+import itertools
 import logging
 
 from ophyd import (AreaDetector, CamBase, TIFFPlugin, Component as Cpt,
                    HDF5Plugin, Device, StatsPlugin, ProcessPlugin,
-                   ROIPlugin, EpicsSignal)
+                   ROIPlugin, EpicsSignal, set_and_wait)
 from ophyd.areadetector.plugins import PluginBase
 from ophyd.areadetector import (EpicsSignalWithRBV as SignalWithRBV)
 from ophyd.areadetector.filestore_mixins import (
-    FileStoreIterativeWrite, FileStoreTIFF, FileStorePluginBase)
+    FileStoreTIFF, FileStoreBase,
+    FileStorePluginBase as _FileStorePluginBase)
 
 from .utils import (makedirs, make_filename_add_subdirectory)
+from ..path_signal import EpicsPathSignal, set_and_wait_path
 from .trigger_mixins import (HxnModalTrigger, FileStoreBulkReadable)
 
 from pathlib import PurePath
@@ -68,8 +71,43 @@ class DexelaDetector(AreaDetector):
               )
 
 
+class FileStorePluginBase(_FileStorePluginBase):
+    'Temporary class: if/when EpicsPathSignal is merged, this can be removed'
+
+    def stage(self):
+        # Make a filename.
+        filename, read_path, write_path = self.make_filename()
+
+        # Ensure we do not have an old file open.
+        if self.file_write_mode != 'Single':
+            set_and_wait(self.capture, 0)
+        # These must be set before parent is staged (specifically
+        # before capture mode is turned on. They will not be reset
+        # on 'unstage' anyway.
+        # ** NOTE ** differences here
+        set_and_wait_path(self.file_path, write_path,
+                          path_semantics=self.file_path.path_semantics)
+        set_and_wait(self.file_name, filename)
+        set_and_wait(self.file_number, 0)
+        FileStoreBulkReadable.stage(self)  # skip _FileStorePluginBase, this is next in MRO
+        # self._point_counter = itertools.count()
+        # ** NOTE ** only difference
+
+        # AD does this same templating in C, but we can't access it
+        # so we do it redundantly here in Python.
+        self._fn = self.file_template.get() % (read_path,
+                                               filename,
+                                               self.file_number.get() - 1)
+                                               # file_number is *next* iteration
+        self._fp = read_path
+        if not self.file_path_exists.get():
+            raise IOError("Path %s does not exist on IOC."
+                          "" % self.file_path.get())
+
+
 class DexelaFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
     _spec = 'TPX_HDF5'
+    filestore_spec = _spec
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -83,11 +121,7 @@ class DexelaFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
         staged = super().stage()
         res_kwargs = {'frame_per_point': 1}
         logger.debug("Inserting resource with filename %s", self._fn)
-        fn = PurePath(self._fn).relative_to(self.reg_root)
-        self._resource = self._reg.register_resource(
-            self.filestore_spec,
-            str(self.reg_root), str(fn),
-            res_kwargs)
+        self._generate_resource(res_kwargs)
 
         return staged
 
@@ -100,6 +134,9 @@ class DexelaFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
 
 
 class HDF5PluginWithFileStore(HDF5Plugin, DexelaFileStoreHDF5):
+    file_path = Cpt(EpicsPathSignal, 'FilePath', path_semantics='nt',
+                    kind='config')
+
     def stage(self):
         mode_settings = self.parent.mode_settings
         total_points = mode_settings.total_points.get()
