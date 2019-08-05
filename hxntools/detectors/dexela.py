@@ -7,7 +7,7 @@ from ophyd import (AreaDetector, CamBase, TIFFPlugin, Component as Cpt,
                    ROIPlugin, EpicsSignal, set_and_wait)
 from ophyd.areadetector.plugins import PluginBase
 from ophyd.areadetector import (EpicsSignalWithRBV as SignalWithRBV)
-from ophyd.areadetector.filestore_mixins import (FileStoreTIFF, FileStoreBase,
+from ophyd.areadetector.filestore_mixins import (FileStoreTIFF,
                                                  FileStorePluginBase)
 
 from .utils import (makedirs, make_filename_add_subdirectory)
@@ -144,8 +144,9 @@ class HxnDexelaDetector(HxnModalTrigger, DexelaDetector):
     # tiff1 = Cpt(DexelaTiffPlugin, 'TIFF1:',
     #             read_attrs=[],
     #             configuration_attrs=[],
-    #             write_path_template='Z:\\%Y\\%m\\%d\\',
-    #             read_path_template='/data/%Y/%m/%d/')
+    #             write_path_template='Z:\\%Y\\%m\\%d',
+    #             read_path_template='/data/%Y/%m/%d/',
+    #             path_semantics='windows')
 
     proc1 = Cpt(ProcessPlugin, 'Proc1:')
     stats1 = Cpt(StatsPlugin, 'Stats1:')
