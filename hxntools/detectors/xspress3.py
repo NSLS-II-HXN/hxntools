@@ -126,9 +126,9 @@ class Xspress3FileStore(FileStorePluginBase, HDF5Plugin):
                 time.sleep(0.1)
                 if i > 150:
                     logger.warning('Still capturing data .... giving up.')
-                    logger.warning('Check that the xspress3 is configure to take the right.'
+                    logger.warning('Check that the xspress3 is configured to take the right '
                                    'number of frames '
-                                   f'(it is trynig to take {self.parent.settings.num_images.get()})')
+                                   f'(it is trying to take {self.parent.settings.num_images.get()})')
                     self.capture.put(0)
                     break
 
