@@ -1,5 +1,3 @@
-# Since the hxntools.detectors.xspress3 module is now shared with srx, breaking
-# out the truly hxn-specific stuff here
 from collections import OrderedDict, namedtuple
 import uuid
 import itertools
@@ -13,8 +11,8 @@ from ophyd.status import DeviceStatus
 from ophyd.device import (BlueskyInterface, Staged)
 from ophyd.utils import set_and_wait
 
-from .xspress3 import (XspressTrigger, Xspress3Detector,
-                       Xspress3FileStore, Xspress3ROI)
+from nslsii.detectors.xspress3 import (XspressTrigger, Xspress3Detector,
+                                       Xspress3FileStore, Xspress3ROI)
 from .trigger_mixins import HxnModalBase
 
 import pandas as pd
