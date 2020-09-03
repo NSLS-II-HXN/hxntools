@@ -47,6 +47,7 @@ setup(
     cmdclass=versioneer.get_cmdclass(),
     description=description,
     long_description=long_description,
+    long_description_content_type='text/markdown',
     author="Brookhaven National Laboratory",
     author_email="DAMA@bnl.gov",
     url="https://github.com/NSLS-II-HXN/hxntools",
