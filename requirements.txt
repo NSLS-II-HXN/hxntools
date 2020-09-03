@@ -9,3 +9,4 @@ numpy
 ophyd
 pandas
 pyepics
+scipy
