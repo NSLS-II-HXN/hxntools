@@ -1,0 +1,12 @@
+bluesky
+boltons
+cycler
+databroker
+h5py
+matplotlib
+nslsii
+numpy
+ophyd
+pandas
+pyepics
+scipy
