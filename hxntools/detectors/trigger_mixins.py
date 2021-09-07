@@ -172,19 +172,14 @@ class FileStoreBulkReadable(FileStoreIterativeWrite):
 
     def bulk_read(self, timestamps):
         image_name = self.image_name
-        print("Bulk_read start", ttime.time())
         #uids = [self.generate_datum(self.image_name, ts, {}) for ts in timestamps]
-
         uids = []
         for i, ts in enumerate(timestamps):
             print(i, ttime.time())
             uids.append(self.generate_datum(self.image_name, ts, {}))
 
-        print("Bulk_read middle", ttime.time())
-
         # clear so unstage will not save the images twice:
         self._reset_data()
-        print("Bulk_read end", ttime.time())
         return {image_name: uids}
 
     @property
