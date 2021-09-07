@@ -175,7 +175,6 @@ class FileStoreBulkReadable(FileStoreIterativeWrite):
         #uids = [self.generate_datum(self.image_name, ts, {}) for ts in timestamps]
         uids = []
         for i, ts in enumerate(timestamps):
-            print(i, ttime.time())
             uids.append(self.generate_datum(self.image_name, ts, {}))
 
         # clear so unstage will not save the images twice:
