@@ -258,7 +258,7 @@ def _get_a2_args(*args, time=None):
 @functools.wraps(plans.inner_product_scan)
 def a2scan(dets, *args, time=None, md=None):
     args, time = _get_a2_args(*args, time=time)
-    total_points = int(args[-1])
+    total_points = int(args[0])
     yield from _pre_scan(dets, total_points=total_points, count_time=time)
     return (yield from plans.inner_product_scan(dets, *args, md=md,
                                                 per_step=one_nd_step))
@@ -267,7 +267,7 @@ def a2scan(dets, *args, time=None, md=None):
 @functools.wraps(plans.relative_inner_product_scan)
 def d2scan(dets, *args, time=None, md=None):
     args, time = _get_a2_args(*args, time=time)
-    total_points = int(args[-1])
+    total_points = int(args[0])
     yield from _pre_scan(dets, total_points=total_points, count_time=time)
     return (yield from plans.relative_inner_product_scan(dets, *args, md=md,
                                                          per_step=one_nd_step))
