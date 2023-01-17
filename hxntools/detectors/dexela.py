@@ -4,7 +4,8 @@ import logging
 
 from ophyd import (AreaDetector, CamBase, TIFFPlugin, Component as Cpt,
                    HDF5Plugin, Device, StatsPlugin, ProcessPlugin,
-                   ROIPlugin, EpicsSignal, set_and_wait)
+                   ROIPlugin, EpicsSignal)
+# from ophyd.utils import set_and_wait
 from ophyd.areadetector.plugins import PluginBase
 from ophyd.areadetector import (EpicsSignalWithRBV as SignalWithRBV)
 from ophyd.areadetector.filestore_mixins import (FileStoreTIFF,
