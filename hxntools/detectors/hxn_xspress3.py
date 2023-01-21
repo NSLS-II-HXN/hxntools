@@ -193,7 +193,6 @@ class HxnXspress3DetectorBase(HxnXspressTrigger, Xspress3Detector):
 
         logger.info('Ensuring detector %r capture stopped...',
                     self.name)
-        # set_and_wait(self.settings.acquire, 0)
         self.settings.acquire.set(0).wait()
         self.hdf5.stop(success=success)
         logger.info('... detector %r ok', self.name)
