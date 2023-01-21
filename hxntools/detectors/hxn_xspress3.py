@@ -9,7 +9,6 @@ from ophyd import (Component as Cpt, Signal)
 from ophyd.areadetector.plugins import PluginBase
 from ophyd.status import DeviceStatus
 from ophyd.device import (BlueskyInterface, Staged)
-# from ophyd.utils import set_and_wait
 
 from nslsii.detectors.xspress3 import (XspressTrigger, Xspress3Detector,
                                        Xspress3FileStore, Xspress3ROI)
