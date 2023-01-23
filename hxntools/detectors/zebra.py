@@ -4,7 +4,6 @@ import logging
 from ophyd import (Device, Component as Cpt, FormattedComponent as FC,
                    Signal)
 from ophyd import (EpicsSignal, EpicsSignalRO, DeviceStatus)
-from ophyd.utils import set_and_wait
 
 from .trigger_mixins import HxnModalBase
 
@@ -258,8 +257,8 @@ class ZebraGate(Device):
                          read_attrs=read_attrs, **kwargs)
 
     def set_input_edges(self, edge1, edge2):
-        set_and_wait(self.input1.edge, int(edge1))
-        set_and_wait(self.input2.edge, int(edge2))
+        self.input1.edge.set(int(edge1)).wait()
+        self.input2.edge.set(int(edge2)).wait()
 
 
 class Zebra(HxnModalBase, Device):

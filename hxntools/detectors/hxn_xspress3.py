@@ -9,7 +9,6 @@ from ophyd import (Component as Cpt, Signal)
 from ophyd.areadetector.plugins import PluginBase
 from ophyd.status import DeviceStatus
 from ophyd.device import (BlueskyInterface, Staged)
-from ophyd.utils import set_and_wait
 
 from nslsii.detectors.xspress3 import (XspressTrigger, Xspress3Detector,
                                        Xspress3FileStore, Xspress3ROI)
@@ -194,6 +193,6 @@ class HxnXspress3DetectorBase(HxnXspressTrigger, Xspress3Detector):
 
         logger.info('Ensuring detector %r capture stopped...',
                     self.name)
-        set_and_wait(self.settings.acquire, 0)
+        self.settings.acquire.set(0).wait()
         self.hdf5.stop(success=success)
         logger.info('... detector %r ok', self.name)
