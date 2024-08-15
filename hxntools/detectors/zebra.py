@@ -345,11 +345,27 @@ class HxnZebra(Zebra):
             self.gate[1].set_input_edges(ZebraInputEdge.FALLING,
                                          ZebraInputEdge.RISING)
 
+            # Pulse 1 - modulate pulse width for Eiger trigger
+            self.pulse[1].input_addr.put(ZebraAddresses.IN3_OC)
+            self.pulse[1].delay.put(0)
+            self.pulse[1].time_units.put('s')
+
+            # Pulse 2 - 1ms pulse for scaler 1 gate
+            self.pulse[2].input_addr.put(ZebraAddresses.IN3_OC)
+            self.pulse[2].delay.put(0)
+            self.pulse[2].input_edge.put(0)
+            self.pulse[2].width.put(0.001)
+            self.pulse[2].time_units.put('s')
+
+            # Pulse 3 - 1ms pulse for scaler 1 inhibit
+            self.pulse[3].input_addr.put(ZebraAddresses.IN3_OC)
+            self.pulse[3].delay.put(0)
+            self.pulse[3].input_edge.put(1)
+            self.pulse[3].width.put(0.001)
+            self.pulse[3].time_units.put('s')
+
             # Output 1 - timepix (OR merlin, see below)
             # self.output[1].ttl.addr.put(ZebraAddresses.GATE1)
-
-            # Output 2 - scaler 1 inhibit
-            self.output[2].ttl.addr.put(ZebraAddresses.GATE1)
 
             # * Gate 2 - Active high (high during exposure)
             self.gate[2].input1.addr.put(ZebraAddresses.IN3_OC)
@@ -357,10 +373,19 @@ class HxnZebra(Zebra):
             self.gate[2].set_input_edges(ZebraInputEdge.RISING,
                                          ZebraInputEdge.FALLING)
 
-            # Output 1 - merlin and dexela
+            # Output 1 - merlin and dexela and eiger
             self.output[1].ttl.addr.put(ZebraAddresses.GATE2)
+            #self.output[1].ttl.addr.put(ZebraAddresses.PULSE1)
+
+            # Output 2 - scaler 1 inhibit
+            self.output[2].ttl.addr.put(ZebraAddresses.GATE2)
+            #self.output[2].ttl.addr.put(ZebraAddresses.DISCONNECT)
+            #self.output[2].ttl.addr.put(ZebraAddresses.PULSE1)
+
             # Output 3 - scaler 1 gate
             self.output[3].ttl.addr.put(ZebraAddresses.GATE2)
+            #self.output[3].ttl.addr.put(ZebraAddresses.PULSE1)
+
             # Output 4 - xspress 3
             self.output[4].ttl.addr.put(ZebraAddresses.GATE2)
 

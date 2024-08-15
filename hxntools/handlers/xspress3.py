@@ -14,4 +14,4 @@ FMT_ROI_KEY = 'entry/instrument/detector/NDAttributes/CHAN{}ROI{}'
 
 def register(db):
     db.reg.register_handler(Xspress3HDF5Handler.HANDLER_NAME,
-                            Xspress3HDF5Handler, overwrite=True)
+                            Xspress3HDF5Handler)

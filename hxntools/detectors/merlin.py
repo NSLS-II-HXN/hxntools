@@ -54,11 +54,17 @@ class MerlinFileStoreHDF5(FileStorePluginBase, FileStoreBulkReadable):
                                 ])
 
     def stage(self):
+        logger.info("Staging")
         staged = super().stage()
+        logger.info("Staging step 2")
         res_kwargs = {'frame_per_point': 1}
+        logger.info("res_kwargs = {frame_per_point: }")
+        
         logger.debug("Inserting resource with filename %s", self._fn)
+        logger.info("Inserting resource with filename %s", self._fn)
         self._generate_resource(res_kwargs)
-
+        logger.info("generating resources")
+        logger.info("Staged")
         return staged
 
     def make_filename(self):

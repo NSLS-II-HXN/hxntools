@@ -9,3 +9,7 @@ def register(db):
     register(db)
     from .timepix import register
     register(db)
+    from .rasmi2 import register
+    register(db)
+    from .bulkdata import register
+    register(db)

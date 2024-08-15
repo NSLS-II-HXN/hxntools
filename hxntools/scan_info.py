@@ -92,7 +92,7 @@ def _get_scan_info_bs_v0(header):
 
         logger.debug('Scan %s (%s) is a fly-scan (%s) of axes %s '
                      'with per-frame exposure time of %.3f s',
-                     start_doc['scan_id'], start_doc['uid'], scan_type,
+                     start_doc.scan_id, start_doc.uid, scan_type,
                      motors, exposure_time)
         try:
             range_ = start_doc['scan_range']
@@ -103,8 +103,8 @@ def _get_scan_info_bs_v0(header):
             except (KeyError, ValueError):
                 pass
     elif scan_type in step_2d:
-        logger.debug('Scan %s (%s) is an ND scan (%s)', start_doc['scan_id'],
-                     start_doc['uid'], scan_type)
+        logger.debug('Scan %s (%s) is an ND scan (%s)', start_doc.scan_id,
+                     start_doc.uid, scan_type)
 
         try:
             args = _eval(scan_args['args'])
@@ -133,7 +133,7 @@ def _get_scan_info_bs_v0(header):
         exposure_time = float(scan_args.get('exposure_time', 0.0))
         logger.debug('Scan %s (%s) is a fermat scan (%s) %d points, '
                      'with per-point exposure time of %.3f s',
-                     start_doc['scan_id'], start_doc['uid'], scan_type,
+                     start_doc.scan_id, start_doc.uid, scan_type,
                      dimensions[0], exposure_time)
         try:
             range_ = [(float(start_doc['x_range']),
@@ -142,8 +142,8 @@ def _get_scan_info_bs_v0(header):
             pass
 
     elif scan_type in step_1d or 'num' in start_doc:
-        logger.debug('Scan %s (%s) is a 1D scan (%s)', start_doc['scan_id'],
-                     start_doc['uid'], scan_type)
+        logger.debug('Scan %s (%s) is a 1D scan (%s)', start_doc.scan_id,
+                     start_doc.uid, scan_type)
         exposure_time = float(start_doc.get('exposure_time', 0.0))
         # 1D scans
         try:
@@ -153,7 +153,7 @@ def _get_scan_info_bs_v0(header):
             dimensions = []
         motor_keys = ['motor']
     else:
-        msg = 'Unrecognized scan type (uid={} {})'.format(start_doc['uid'],
+        msg = 'Unrecognized scan type (uid={} {})'.format(start_doc.uid,
                                                           scan_type)
         raise RuntimeError(msg)
 
@@ -183,7 +183,8 @@ def get_scan_info(header):
     elif 'plan_args' in start_doc:
         return _get_scan_info_bs_v1(header)
     else:
-        raise RuntimeError('Unknown start document information')
+        pass
+        #raise RuntimeError('Unknown start document information')
 
 
 def _get_scan_info_bs_v1(header):
@@ -207,8 +208,8 @@ def _get_scan_info_bs_v1(header):
     motors = start_doc['motors']
 
     if plan_type in fly_scans:
-        logger.debug('Scan %s (%s) is a fly scan (%s %s)', start_doc['scan_id'],
-                     start_doc['uid'], plan_type, plan_name)
+        logger.debug('Scan %s (%s) is a fly scan (%s %s)', start_doc.scan_id,
+                     start_doc.uid, plan_type, plan_name)
         shape = start_doc['shape']
         pyramid = start_doc['fly_type'] == 'pyramid'
         range_ = dict(zip(motors, start_doc['scan_range']))
@@ -219,7 +220,7 @@ def _get_scan_info_bs_v1(header):
             pattern_args = start_doc['plan_pattern_args']
         except KeyError as ex:
             msg = ('Unrecognized plan type/name (uid={} name={} type={}; '
-                   'missing key: {!r})'.format(start_doc['uid'], plan_name,
+                   'missing key: {!r})'.format(start_doc.uid, plan_name,
                                                plan_type, ex))
             raise RuntimeError(msg)
 
@@ -384,3 +385,48 @@ def get_combined_table(headers, name='primary',
     else:
         # edge case: no data
         return pd.DataFrame()
+
+def get_scan_positions(header,use_scan_input = False):
+    motors = header.start['motors']
+    pos0 = np.array(list(header.data(motors[0]))).squeeze()
+    pos1 = np.array(list(header.data(motors[1]))).squeeze()
+    if pos0.size > 0:
+        return pos0,pos1
+    else:
+        try:
+            motor_table = {'zpssx':('inenc2_val',-9.7e-5),
+                        'zpssy':('inenc3_val',1.006e-4),
+                        'zpssz':('inenc4_val',-1.04e-4),
+                        'dssx':('inenc2_val',-1e-4),
+                        'dssy':('inenc3_val',1e-4),
+                        'dssz':('inenc4_val',1e-4),
+                        #'pt_tomo_ssx':('inenc2_val',1e-4),
+                        #'pt_tomo_ssy':('inenc3_val',-1e-4)
+                        #'pt_tomo_ssy':('inenc4_val',6e-5)
+
+                        # Scanning MLL setup
+                        'pt_tomo_ssx':('inenc2_val',1e-4),
+                        'pt_tomo_ssy':('inenc4_val',-1e-4)
+                        }
+            load0 = motor_table[motors[0]]
+            load1 = motor_table[motors[1]]
+            pos0 = np.array(list(header.data(load0[0]))).squeeze()*load0[1]
+            pos1 = np.array(list(header.data(load1[0]))).squeeze()*load1[1]
+            shape = header.start['shape']
+            npoints = np.prod(shape)
+            if pos0.size>npoints:
+                pos0 = np.reshape(pos0,(npoints,pos0.size//npoints))
+                pos0 = np.mean(pos0,1)
+            if pos1.size>npoints:
+                pos1 = np.reshape(pos1,(npoints,pos1.size//npoints))
+                pos1 = np.mean(pos1,1)
+            if use_scan_input:
+                sinput = header.start['scan']['scan_input']
+                pos0 = pos0 + (sinput[0] + sinput[1])/2 - np.mean(pos0)
+                pos1 = pos1 + (sinput[3] + sinput[4])/2 - np.mean(pos1)
+            return pos0,pos1
+        except:
+            print('Unable to load motor %s,%s'%(motors[0],motors[1]))
+            return []
+
+        
