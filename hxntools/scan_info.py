@@ -6,6 +6,7 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+from .motor_info import motor_table
 
 def _eval(scan_args):
     '''Evaluate scan arguments, replacing OphydObjects with NamedObjects'''
@@ -389,44 +390,46 @@ def get_combined_table(headers, name='primary',
 def get_scan_positions(header,use_scan_input = False):
     motors = header.start['motors']
     pos0 = np.array(list(header.data(motors[0]))).squeeze()
-    pos1 = np.array(list(header.data(motors[1]))).squeeze()
     if pos0.size > 0:
-        return pos0,pos1
+        if len(motors) > 1:
+            pos1 = np.array(list(header.data(motors[1]))).squeeze()
+            return pos0,pos1
+        else:
+            return pos0
     else:
         try:
-            motor_table = {'zpssx':('inenc2_val',-9.7e-5),
-                        'zpssy':('inenc3_val',1.006e-4),
-                        'zpssz':('inenc4_val',-1.04e-4),
-                        'dssx':('inenc2_val',-1e-4),
-                        'dssy':('inenc3_val',1e-4),
-                        'dssz':('inenc4_val',1e-4),
-                        #'pt_tomo_ssx':('inenc2_val',1e-4),
-                        #'pt_tomo_ssy':('inenc3_val',-1e-4)
-                        #'pt_tomo_ssy':('inenc4_val',6e-5)
-
-                        # Scanning MLL setup
-                        'pt_tomo_ssx':('inenc2_val',1e-4),
-                        'pt_tomo_ssy':('inenc4_val',-1e-4)
-                        }
-            load0 = motor_table[motors[0]]
-            load1 = motor_table[motors[1]]
-            pos0 = np.array(list(header.data(load0[0]))).squeeze()*load0[1]
-            pos1 = np.array(list(header.data(load1[0]))).squeeze()*load1[1]
-            shape = header.start['shape']
-            npoints = np.prod(shape)
-            if pos0.size>npoints:
-                pos0 = np.reshape(pos0,(npoints,pos0.size//npoints))
-                pos0 = np.mean(pos0,1)
-            if pos1.size>npoints:
-                pos1 = np.reshape(pos1,(npoints,pos1.size//npoints))
-                pos1 = np.mean(pos1,1)
-            if use_scan_input:
-                sinput = header.start['scan']['scan_input']
-                pos0 = pos0 + (sinput[0] + sinput[1])/2 - np.mean(pos0)
-                pos1 = pos1 + (sinput[3] + sinput[4])/2 - np.mean(pos1)
-            return pos0,pos1
+            if len(motors) == 2:
+                load0 = motor_table[motors[0]]
+                load1 = motor_table[motors[1]]
+                pos0 = np.array(list(header.data(load0[0]))).squeeze()*load0[1]
+                pos1 = np.array(list(header.data(load1[0]))).squeeze()*load1[1]
+                shape = header.start['shape']
+                npoints = np.prod(shape)
+                if pos0.size>npoints:
+                    pos0 = np.reshape(pos0,(npoints,pos0.size//npoints))
+                    pos0 = np.mean(pos0,1)
+                if pos1.size>npoints:
+                    pos1 = np.reshape(pos1,(npoints,pos1.size//npoints))
+                    pos1 = np.mean(pos1,1)
+                if use_scan_input:
+                    sinput = header.start['scan']['scan_input']
+                    pos0 = pos0 + (sinput[0] + sinput[1])/2 - np.mean(pos0)
+                    pos1 = pos1 + (sinput[3] + sinput[4])/2 - np.mean(pos1)
+                return pos0,pos1
+            else:
+                load0 = motor_table[motors[0]]
+                pos0 = np.array(list(header.data(load0[0]))).squeeze()*load0[1]
+                shape = header.start['shape']
+                npoints = np.prod(shape)
+                if pos0.size>npoints:
+                    pos0 = np.reshape(pos0,(npoints,pos0.size//npoints))
+                    pos0 = np.mean(pos0,1)
+                if use_scan_input:
+                    sinput = header.start['scan']['scan_input']
+                    pos0 = pos0 + (sinput[0] + sinput[1])/2 - np.mean(pos0)
+                return pos0
         except:
             print('Unable to load motor %s,%s'%(motors[0],motors[1]))
             return []
 
-        
+

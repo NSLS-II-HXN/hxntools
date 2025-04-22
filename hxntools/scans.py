@@ -37,6 +37,11 @@ def get_next_scan_id():
     dev_scan_id.wait_for_connection()
     return dev_scan_id.get_next_scan_id()
 
+def get_last_scan_id():
+    dev_scan_id.wait_for_connection()
+    return int(dev_scan_id.scan_id.get())
+
+
 
 def one_nd_step(detectors, step, pos_cache):
     """

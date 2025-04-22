@@ -32,6 +32,9 @@ class BulkMerlin(HandlerBase):
         ds.id.refresh()
         return ds[n_first:n_last, :, :]
 
+    def dataset(self):
+        return self._handle['entry/instrument/detector/data']
+
 class ZebraHDF5Handler(HandlerBase):
     HANDLER_NAME = "ZEBRA_HDF51_FLY_STREAM_V1"
 
