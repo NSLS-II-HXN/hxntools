@@ -73,8 +73,7 @@ def one_nd_step(detectors, step, pos_cache):
 
 
 
-@asyncio.coroutine
-def cmd_scan_setup(msg):
+async def cmd_scan_setup(msg):
     detectors = msg.kwargs['detectors']
     total_points = msg.kwargs['total_points']
     count_time = msg.kwargs['count_time']
@@ -117,12 +116,11 @@ def cmd_scan_setup(msg):
 
 
 def setup(*, RE, debug_mode=False):
-    @asyncio.coroutine
-    def cmd_next_scan_id(msg):
+    
+    async def cmd_next_scan_id(msg):
         RE.md['scan_id'] = get_next_scan_id() - 1
 
-    @asyncio.coroutine
-    def _debug_next_scan_id(cmd):
+    async def _debug_next_scan_id(cmd):
         print('debug_next_scan_id')
         RE.md['scan_id'] = 0
 
