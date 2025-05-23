@@ -3,8 +3,10 @@ import logging
 from pathlib import PurePath
 from ophyd import (AreaDetector, CamBase, TIFFPlugin, Component as Cpt,
                    HDF5Plugin, Device, StatsPlugin, ProcessPlugin,
-                   ROIPlugin, TransformPlugin)
+                   ROIPlugin, TransformPlugin, EpicsSignal)
+from ophyd.areadetector import EpicsSignalWithRBV
 
+from ophyd.areadetector.base import ADComponent
 from ophyd.areadetector.filestore_mixins import (
     FileStoreTIFF, FileStorePluginBase)
 
@@ -30,6 +32,8 @@ class MerlinTiffPlugin(TIFFPlugin, FileStoreBulkReadable, FileStoreTIFF,
 
 
 class MerlinDetectorCam(CamBase):
+    acquire = ADComponent(EpicsSignal,'Acquire')
+    quad_merlin_mode = ADComponent(EpicsSignalWithRBV,'QuadMerlinMode')
     pass
 
 
