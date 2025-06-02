@@ -18,6 +18,8 @@ class HDF5DatasetSliceHandler(HandlerBase):
     """
     def __init__(self, filename, key, frame_per_point=1):
         self._fpp = frame_per_point
+        if filename.startswith('/data'):
+            filename = '/nsls2/data/hxn/legacy' + filename[5:]
         self._filename = filename
         self._key = key
         self._file = None

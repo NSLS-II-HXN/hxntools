@@ -6,6 +6,8 @@ class BulkMerlin(HandlerBase):
     HANDLER_NAME = 'MERLIN_HDF5_BULK'
 
     def __init__(self, resource_fn, **kwargs):
+        if resource_fn.startswith('/data'):
+            resource_fn = '/nsls2/data/hxn/legacy' + resource_fn[5:]
         self._handle = h5py.File(resource_fn, "r", libver='latest', swmr=True)
 
     def __call__(self, **kwargs):
@@ -17,6 +19,8 @@ class BulkXSP(HandlerBase):
     HANDLER_NAME = 'XSP3_BULK'
 
     def __init__(self, resource_fn):
+        if resource_fn.startswith('/data'):
+            resource_fn = '/nsls2/data/hxn/legacy' + resource_fn[5:]
         self._handle = h5py.File(resource_fn, "r", libver='latest', swmr=True)
 
     def __call__(self, frame = None, channel = None):
@@ -31,6 +35,8 @@ class ROIHDF5Handler(HandlerBase):
     HANDLER_NAME = "ROI_HDF5_FLY"
 
     def __init__(self, resource_fn):
+        if resource_fn.startswith('/data'):
+            resource_fn = '/nsls2/data/hxn/legacy' + resource_fn[5:]
         self._handle = h5py.File(resource_fn, "r", libver='latest', swmr=True)
 
     def __call__(self, *, det_elem):
@@ -50,6 +56,8 @@ class PandAHandlerHDF5(HandlerBase):
     specs = {"PANDA"}
 
     def __init__(self, filename):
+        if filename.startswith('/data'):
+            filename = '/nsls2/data/hxn/legacy' + filename[5:]
         self._name = filename
 
     def __call__(self, field):

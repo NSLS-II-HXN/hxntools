@@ -5,6 +5,8 @@ class SISHDF5Handler(HandlerBase):
 
     def __init__(self, resource_fn, *, frame_per_point):
         self._frame_per_point = frame_per_point
+        if resource_fn.startswith('/data'):
+            resource_fn = '/nsls2/data/hxn/legacy' + resource_fn[5:]
         self._handle = h5py.File(resource_fn, "r", libver='latest', swmr=True)
 
     def __call__(self, *, column, point_number):
@@ -23,6 +25,8 @@ class BulkMerlin(HandlerBase):
 
     def __init__(self, resource_fn, *, frame_per_point):
         self._frame_per_point = frame_per_point
+        if resource_fn.startswith('/data'):
+            resource_fn = '/nsls2/data/hxn/legacy' + resource_fn[5:]
         self._handle = h5py.File(resource_fn, "r", libver='latest', swmr=True)
 
     def __call__(self, point_number):
@@ -40,6 +44,8 @@ class ZebraHDF5Handler(HandlerBase):
 
     def __init__(self, resource_fn, *, frame_per_point):
         self._frame_per_point = frame_per_point
+        if resource_fn.startswith('/data'):
+            resource_fn = '/nsls2/data/hxn/legacy' + resource_fn[5:]
         self._handle = h5py.File(resource_fn, "r", libver='latest', swmr=True)
 
     def __call__(self, *, column, point_number):
