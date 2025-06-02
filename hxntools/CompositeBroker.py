@@ -22,7 +22,8 @@ import logging
 
 # Load data from Eiger
 db1_name = 'rs'
-db1_addr = 'mongodb://xf03id1-mdb01:27017,xf03id1-mdb02:27017,xf03id1-mdb03:27017'
+#db1_addr = 'mongodb://xf03id1-mdb01:27017,xf03id1-mdb02:27017,xf03id1-mdb03:27017'
+db1_addr = 'mongodb://xf03id1-mdb02:27017,xf03id1-mdb03:27017'
 bootstrap_servers = os.getenv("BLUESKY_KAFKA_BOOTSTRAP_SERVERS", None)
 kafka_password = os.getenv("BLUESKY_KAFKA_PASSWORD", None)
 
@@ -36,7 +37,7 @@ _fs_config_db1 = {'host': db1_addr,
                   'database': 'filestore-2'}
 try:
     if bootstrap_servers is None or kafka_password is None:
-        raise Exception("No kafka env")
+        raise Exception("BLUESKY_KAFKA_BOOTSTRAP_SERVERS or BLUESKY_KAFKA_PASSWORD environment variable not found.")
     kafka_publisher = Publisher(
             topic="hxn.bluesky.datum.documents",
             bootstrap_servers=bootstrap_servers,
@@ -55,9 +56,9 @@ try:
             flush_on_stop_doc=True,
         ) if not os.environ.get('AZURE_TESTING') else None   # Disable on CI
 except:
-    print("BLUESKY_KAFKA_BOOTSTRAP_SERVERS or BLUESKY_KAFKA_PASSWORD not set, databroker will be readonly.")
+    print("Unable to setup kafka publisher, databroker will be readonly.")
 
-#f_benchmark = open("/tmp/benchmark.out", "a+")
+f_benchmark = open("/nsls2/data/hxn/shared/config/bluesky/profile_collection/benchmark.out", "a+")
 datum_counts = {}
 
 def sanitize_np(val):
@@ -73,6 +74,12 @@ def apply_to_dict_recursively(d, f):
         if hasattr(val, 'items'):
             d[key] = apply_to_dict_recursively(val, f)
         d[key] = f(val)
+
+def _write_to_file(col_name, method_name, t1, t2):
+        f_benchmark.write(
+            "{0}: {1}, t1: {2} t2:{3} time:{4} \n".format(
+                col_name, method_name, t1, t2, (t2-t1),))
+        f_benchmark.flush()
 
 class CompositeRegistry(Registry):
     '''Composite registry.'''
@@ -100,7 +107,8 @@ class CompositeRegistry(Registry):
 
         try:
             col.insert_one(resource_object)
-        except duplicate_exc:
+        except Exception as duplicate_exc:
+            print(duplicate_exc)
             if ignore_duplicate_error:
                 warnings.warn("Ignoring attempt to insert Datum with duplicate "
                           "datum_id, assuming that both ophyd and bluesky "
@@ -243,6 +251,12 @@ class CompositeRegistry(Registry):
 
         self._bulk_insert_datum(self._datum_col, resource_uid, d_ids, datum_kwarg_list)
         return d_ids
+
+
+mds_db1 = MDS(_mds_config_db1, auth=False)
+db1 = Broker(mds_db1, CompositeRegistry(_fs_config_db1))
+
+# wrapper for two databases
 class CompositeBroker(Broker):
     """wrapper for two databases"""
 
@@ -297,18 +311,22 @@ class CompositeBroker(Broker):
     def insert(self, name, doc):
 
         if name == "start":
-            #f_benchmark.write("\n scan_id: {} \n".format(doc['scan_id']))
-            #f_benchmark.flush()
+            f_benchmark.write("\n scan_id: {} \n".format(doc['scan_id']))
+            f_benchmark.flush()
             datum_counts = {}
 
         ts =  str(datetime.now().timestamp())
 
         if name in {'bulk_events'}:
             ret2 = self._insert(name, doc, db1.mds._event_col, ts)
+        elif name == 'event_page':
+            import event_model
+            for ev_doc in event_model.unpack_event_page(doc):
+                db1.insert('event', ev_doc)
+            ret2 = None
         else:
             ret2 = db1.insert(name, doc)
         return ret2
-
 
 logger = logging.getLogger(__name__)
 
@@ -372,6 +390,7 @@ class HDF5DatasetSliceHandler(HandlerBase):
 mds_db1 = MDS(_mds_config_db1, auth=False)
 db1 = Broker(mds_db1, CompositeRegistry(_fs_config_db1))
 db = CompositeBroker(mds_db1, CompositeRegistry(_fs_config_db1))
+db.name = 'hxn'
 
 try:
     from hxntools.handlers import register
