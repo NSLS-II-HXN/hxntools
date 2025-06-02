@@ -20,7 +20,7 @@ class SISHDF5Handler(HandlerBase):
     #     self._handle.close()
     #     self._handle = None
     #     super().close()
-class BulkMerlin(HandlerBase):
+class BulkMerlinStream(HandlerBase):
     HANDLER_NAME = 'MERLIN_FLY_STREAM_V2'
 
     def __init__(self, resource_fn, *, frame_per_point):
@@ -57,6 +57,6 @@ class ZebraHDF5Handler(HandlerBase):
 
 def register(db):
     db.reg.register_handler(SISHDF5Handler.HANDLER_NAME, SISHDF5Handler, overwrite=True)
-    db.reg.register_handler(BulkMerlin.HANDLER_NAME, BulkMerlin,  overwrite=True)
+    db.reg.register_handler(BulkMerlinStream.HANDLER_NAME, BulkMerlinStream,  overwrite=True)
     db.reg.register_handler(ZebraHDF5Handler.HANDLER_NAME, ZebraHDF5Handler, overwrite=True)
 
