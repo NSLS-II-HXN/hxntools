@@ -58,7 +58,10 @@ try:
 except:
     print("Unable to setup kafka publisher, databroker will be readonly.")
 
-f_benchmark = open("/nsls2/data/hxn/shared/config/bluesky/profile_collection/benchmark.out", "a+")
+try:
+    f_benchmark = open("/nsls2/data/hxn/shared/config/bluesky/profile_collection/benchmark.out", "a+")
+except:
+    f_benchmark = None
 datum_counts = {}
 
 def sanitize_np(val):
@@ -76,6 +79,7 @@ def apply_to_dict_recursively(d, f):
         d[key] = f(val)
 
 def _write_to_file(col_name, method_name, t1, t2):
+    if f_benchmark:
         f_benchmark.write(
             "{0}: {1}, t1: {2} t2:{3} time:{4} \n".format(
                 col_name, method_name, t1, t2, (t2-t1),))
@@ -311,8 +315,9 @@ class CompositeBroker(Broker):
     def insert(self, name, doc):
 
         if name == "start":
-            f_benchmark.write("\n scan_id: {} \n".format(doc['scan_id']))
-            f_benchmark.flush()
+            if f_benchmark:
+                f_benchmark.write("\n scan_id: {} \n".format(doc['scan_id']))
+                f_benchmark.flush()
             datum_counts = {}
 
         ts =  str(datetime.now().timestamp())
