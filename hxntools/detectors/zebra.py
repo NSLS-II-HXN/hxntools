@@ -419,8 +419,10 @@ class HxnZebra(Zebra):
 
             # Timepix
             # self.output[1].ttl.addr.put(ZebraAddresses.PULSE1)
-            # Merlin
+
+            # Output 1 - merlin and dexela and eiger
             self.output[1].ttl.addr.put(ZebraAddresses.PULSE1)
+
             self.output[2].ttl.addr.put(ZebraAddresses.SOFT_IN4)
 
             self.gate[2].input1.addr.put(ZebraAddresses.PULSE1)

@@ -62,12 +62,12 @@ class HxnXspressTrigger(HxnModalBase, BlueskyInterface):
         # self.stage_sigs[self.settings.num_images] = total_capture
 
     def _dispatch_channels(self, trigger_time):
-        self._abs_trigger_count += 1
         channels = self._channels.values()
         for sn in self.read_attrs:
             ch = getattr(self, sn)
             if ch in channels:
-                self.dispatch(ch.name, trigger_time)
+                self.generate_datum(ch.name, trigger_time,{})
+        self._abs_trigger_count += 1
 
     def trigger_internal(self):
         if self._staged != Staged.yes:
@@ -84,8 +84,8 @@ class HxnXspressTrigger(HxnModalBase, BlueskyInterface):
 
         self._status = DeviceStatus(self)
         self._status._finished()
-        if self.mode_settings.scan_type.get() != 'fly':
-            self._dispatch_channels(trigger_time=time.time())
+        # if self.mode_settings.scan_type.get() != 'fly':
+        #    self._dispatch_channels(trigger_time=time.time())
             # fly-scans take care of dispatching on their own
 
         return self._status
