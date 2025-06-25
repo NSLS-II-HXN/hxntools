@@ -15,6 +15,9 @@ class BulkMerlin(HandlerBase):
         ds.id.refresh()
         return ds[:,:,:]
 
+    def dataset(self):
+        return self._handle['entry/instrument/detector/data']
+
 class BulkXSP(HandlerBase):
     HANDLER_NAME = 'XSP3_BULK'
 
