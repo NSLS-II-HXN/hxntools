@@ -24,8 +24,6 @@ import logging
 db1_name = 'rs'
 #db1_addr = 'mongodb://xf03id1-mdb01:27017,xf03id1-mdb02:27017,xf03id1-mdb03:27017'
 db1_addr = 'mongodb://xf03id1-mdb02:27017,xf03id1-mdb03:27017'
-bootstrap_servers = os.getenv("BLUESKY_KAFKA_BOOTSTRAP_SERVERS", None)
-kafka_password = os.getenv("BLUESKY_KAFKA_PASSWORD", None)
 
 _mds_config_db1 = {'host': db1_addr,
                    'port': 27017,
@@ -35,28 +33,31 @@ _mds_config_db1 = {'host': db1_addr,
 _fs_config_db1 = {'host': db1_addr,
                   'port': 27017,
                   'database': 'filestore-2'}
-try:
-    if bootstrap_servers is None or kafka_password is None:
-        raise Exception("BLUESKY_KAFKA_BOOTSTRAP_SERVERS or BLUESKY_KAFKA_PASSWORD environment variable not found.")
-    kafka_publisher = Publisher(
-            topic="hxn.bluesky.datum.documents",
-            bootstrap_servers=bootstrap_servers,
-            key=str(uuid.uuid4()),
-            producer_config={
-                    "acks": 1,
-                    "message.timeout.ms": 3000,
-                    "queue.buffering.max.kbytes": 10 * 1048576,
-                    "compression.codec": "snappy",
-                    "ssl.ca.location": certifi.where(),
-                    "security.protocol": "SASL_SSL",
-                    "sasl.mechanisms": "SCRAM-SHA-512",
-                    "sasl.username": "beamline",
-                    "sasl.password": kafka_password,
-                    },
-            flush_on_stop_doc=True,
-        ) if not os.environ.get('AZURE_TESTING') else None   # Disable on CI
-except:
-    print("Unable to setup kafka publisher, databroker will be readonly.")
+
+# bootstrap_servers = os.getenv("BLUESKY_KAFKA_BOOTSTRAP_SERVERS", None)
+# kafka_password = os.getenv("BLUESKY_KAFKA_PASSWORD", None)
+# try:
+#     if bootstrap_servers is None or kafka_password is None:
+#         raise Exception("BLUESKY_KAFKA_BOOTSTRAP_SERVERS or BLUESKY_KAFKA_PASSWORD environment variable not found.")
+#     kafka_publisher = Publisher(
+#             topic="hxn.bluesky.datum.documents",
+#             bootstrap_servers=bootstrap_servers,
+#             key=str(uuid.uuid4()),
+#             producer_config={
+#                     "acks": 1,
+#                     "message.timeout.ms": 3000,
+#                     "queue.buffering.max.kbytes": 10 * 1048576,
+#                     "compression.codec": "snappy",
+#                     "ssl.ca.location": certifi.where(),
+#                     "security.protocol": "SASL_SSL",
+#                     "sasl.mechanisms": "SCRAM-SHA-512",
+#                     "sasl.username": "beamline",
+#                     "sasl.password": kafka_password,
+#                     },
+#             flush_on_stop_doc=True,
+#         ) if not os.environ.get('AZURE_TESTING') else None   # Disable on CI
+# except:
+#     print("Unable to setup kafka publisher, databroker will be readonly.")
 
 try:
     f_benchmark = open("/nsls2/data/hxn/shared/config/bluesky/profile_collection/benchmark.out", "a+")
@@ -85,180 +86,180 @@ def _write_to_file(col_name, method_name, t1, t2):
                 col_name, method_name, t1, t2, (t2-t1),))
         f_benchmark.flush()
 
-class CompositeRegistry(Registry):
-    '''Composite registry.'''
+# class CompositeRegistry(Registry):
+#     '''Composite registry.'''
 
-    def _register_resource(self, col, uid, spec, root, rpath, rkwargs,
-                              path_semantics):
+#     def _register_resource(self, col, uid, spec, root, rpath, rkwargs,
+#                               path_semantics):
 
-        run_start=None
-        ignore_duplicate_error=False
-        duplicate_exc=None
+#         run_start=None
+#         ignore_duplicate_error=False
+#         duplicate_exc=None
 
-        if root is None:
-            root = ''
+#         if root is None:
+#             root = ''
 
-        resource_kwargs = dict(rkwargs)
-        if spec in self.known_spec:
-            js_validate(resource_kwargs, self.known_spec[spec]['resource'])
+#         resource_kwargs = dict(rkwargs)
+#         if spec in self.known_spec:
+#             js_validate(resource_kwargs, self.known_spec[spec]['resource'])
 
-        resource_object = dict(spec=str(spec),
-                               resource_path=str(rpath),
-                               root=str(root),
-                               resource_kwargs=resource_kwargs,
-                               path_semantics=path_semantics,
-                               uid=uid)
+#         resource_object = dict(spec=str(spec),
+#                                resource_path=str(rpath),
+#                                root=str(root),
+#                                resource_kwargs=resource_kwargs,
+#                                path_semantics=path_semantics,
+#                                uid=uid)
 
-        try:
-            col.insert_one(resource_object)
-        except Exception as duplicate_exc:
-            print(duplicate_exc)
-            if ignore_duplicate_error:
-                warnings.warn("Ignoring attempt to insert Datum with duplicate "
-                          "datum_id, assuming that both ophyd and bluesky "
-                          "attempted to insert this document. Remove the "
-                          "Registry (`reg` parameter) from your ophyd "
-                          "instance to remove this warning.")
-            else:
-                raise
+#         try:
+#             col.insert_one(resource_object)
+#         except Exception as duplicate_exc:
+#             print(duplicate_exc)
+#             if ignore_duplicate_error:
+#                 warnings.warn("Ignoring attempt to insert Datum with duplicate "
+#                           "datum_id, assuming that both ophyd and bluesky "
+#                           "attempted to insert this document. Remove the "
+#                           "Registry (`reg` parameter) from your ophyd "
+#                           "instance to remove this warning.")
+#             else:
+#                 raise
 
-        resource_object['id'] = resource_object['uid']
-        resource_object.pop('_id', None)
-        ret = resource_object['uid']
+#         resource_object['id'] = resource_object['uid']
+#         resource_object.pop('_id', None)
+#         ret = resource_object['uid']
 
-        return ret
+#         return ret
 
-    def register_resource(self, spec, root, rpath, rkwargs,
-                              path_semantics='posix'):
+#     def register_resource(self, spec, root, rpath, rkwargs,
+#                               path_semantics='posix'):
 
-        uid = str(uuid.uuid4())
-        datum_counts[uid] = 0
-        method_name = "register_resource"
-        col = self._resource_col
-        ret = self._register_resource(col, uid, spec, root, rpath,
-                                      rkwargs, path_semantics=path_semantics)
+#         uid = str(uuid.uuid4())
+#         datum_counts[uid] = 0
+#         method_name = "register_resource"
+#         col = self._resource_col
+#         ret = self._register_resource(col, uid, spec, root, rpath,
+#                                       rkwargs, path_semantics=path_semantics)
 
-        return ret
+#         return ret
 
-    def _insert_datum(self, col, resource, datum_id, datum_kwargs, known_spec,
-                     resource_col, ignore_duplicate_error=False,
-                     duplicate_exc=None):
-        if ignore_duplicate_error:
-            assert duplicate_exc is not None
-        if duplicate_exc is None:
-            class _PrivateException(Exception):
-                pass
-            duplicate_exc = _PrivateException
-        try:
-            resource['spec']
-            spec = resource['spec']
+#     def _insert_datum(self, col, resource, datum_id, datum_kwargs, known_spec,
+#                      resource_col, ignore_duplicate_error=False,
+#                      duplicate_exc=None):
+#         if ignore_duplicate_error:
+#             assert duplicate_exc is not None
+#         if duplicate_exc is None:
+#             class _PrivateException(Exception):
+#                 pass
+#             duplicate_exc = _PrivateException
+#         try:
+#             resource['spec']
+#             spec = resource['spec']
 
-            if spec in known_spec:
-                js_validate(datum_kwargs, known_spec[spec]['datum'])
-        except (AttributeError, TypeError):
-            pass
-        resource_uid = self._doc_or_uid_to_uid(resource)
-        if type(datum_kwargs) == str and '/' in datum_kwargs:
-            datum_kwargs = {'point_number': datum_kwargs.split('/')[-1]}
+#             if spec in known_spec:
+#                 js_validate(datum_kwargs, known_spec[spec]['datum'])
+#         except (AttributeError, TypeError):
+#             pass
+#         resource_uid = self._doc_or_uid_to_uid(resource)
+#         if type(datum_kwargs) == str and '/' in datum_kwargs:
+#             datum_kwargs = {'point_number': datum_kwargs.split('/')[-1]}
 
-        datum = dict(resource=resource_uid,
-                     datum_id=str(datum_id),
-                     datum_kwargs=dict(datum_kwargs))
-        apply_to_dict_recursively(datum, sanitize_np)
-        # We are transitioning from ophyd objects inserting directly into a
-        # Registry to ophyd objects passing documents to the RunEngine which in
-        # turn inserts them into a Registry. During the transition period, we allow
-        # an ophyd object to attempt BOTH so that configuration files are
-        # compatible with both the new model and the old model. Thus, we need to
-        # ignore the second attempt to insert.
-        try:
-            kafka_publisher('datum', datum)
-            #col.insert_one(datum)
-        except duplicate_exc:
-            if ignore_duplicate_error:
-                warnings.warn("Ignoring attempt to insert Resource with duplicate "
-                              "uid, assuming that both ophyd and bluesky "
-                              "attempted to insert this document. Remove the "
-                              "Registry (`reg` parameter) from your ophyd "
-                              "instance to remove this warning.")
-            else:
-                raise
-        # do not leak mongo objectID
-        datum.pop('_id', None)
+#         datum = dict(resource=resource_uid,
+#                      datum_id=str(datum_id),
+#                      datum_kwargs=dict(datum_kwargs))
+#         apply_to_dict_recursively(datum, sanitize_np)
+#         # We are transitioning from ophyd objects inserting directly into a
+#         # Registry to ophyd objects passing documents to the RunEngine which in
+#         # turn inserts them into a Registry. During the transition period, we allow
+#         # an ophyd object to attempt BOTH so that configuration files are
+#         # compatible with both the new model and the old model. Thus, we need to
+#         # ignore the second attempt to insert.
+#         try:
+#             kafka_publisher('datum', datum)
+#             #col.insert_one(datum)
+#         except duplicate_exc:
+#             if ignore_duplicate_error:
+#                 warnings.warn("Ignoring attempt to insert Resource with duplicate "
+#                               "uid, assuming that both ophyd and bluesky "
+#                               "attempted to insert this document. Remove the "
+#                               "Registry (`reg` parameter) from your ophyd "
+#                               "instance to remove this warning.")
+#             else:
+#                 raise
+#         # do not leak mongo objectID
+#         datum.pop('_id', None)
 
-        return datum
-
-
-    def register_datum(self, resource_uid, datum_kwargs, validate=False):
-
-        if validate:
-            raise RuntimeError('validate not implemented yet')
-
-        res_uid = resource_uid
-        datum_count = datum_counts[res_uid]
-
-        datum_uid = res_uid + '/' + str(datum_count)
-        datum_counts[res_uid] = datum_count + 1
-
-        col = self._datum_col
-        datum = self._insert_datum(col, resource_uid, datum_uid, datum_kwargs, {}, None)
-        ret = datum['datum_id']
-
-        return ret
-
-    def _doc_or_uid_to_uid(self, doc_or_uid):
-
-        if not isinstance(doc_or_uid, six.string_types):
-            try:
-                doc_or_uid = doc_or_uid['uid']
-            except TypeError:
-                pass
-
-        return doc_or_uid
-
-    def _bulk_insert_datum(self, col, resource, datum_ids,
-                           datum_kwarg_list):
-
-        resource_id = self._doc_or_uid_to_uid(resource)
-
-        to_write = []
-
-        d_uids = deque()
-
-        for d_id, d_kwargs in zip(datum_ids, datum_kwarg_list):
-            dm = dict(resource=resource_id,
-                      datum_id=str(d_id),
-                      datum_kwargs=dict(d_kwargs))
-            apply_to_dict_recursively(dm, sanitize_np)
-            to_write.append(pymongo.InsertOne(dm))
-            d_uids.append(dm['datum_id'])
-
-        col.bulk_write(to_write, ordered=False)
-
-        return d_uids
-
-    def bulk_register_datum_table(self, resource_uid, dkwargs_table, validate=False):
-
-        res_uid = resource_uid['uid']
-        datum_count = datum_counts[res_uid]
-
-        if validate:
-            raise RuntimeError('validate not implemented yet')
-
-        d_ids = [res_uid + '/' + str(datum_count+j) for j in range(len(dkwargs_table))]
-        datum_counts[res_uid] = datum_count + len(dkwargs_table)
-
-        dkwargs_table = pd.DataFrame(dkwargs_table)
-        datum_kwarg_list = [ dict(r) for _, r in dkwargs_table.iterrows()]
-
-        method_name = "bulk_register_datum_table"
-
-        self._bulk_insert_datum(self._datum_col, resource_uid, d_ids, datum_kwarg_list)
-        return d_ids
+#         return datum
 
 
-mds_db1 = MDS(_mds_config_db1, auth=False)
-db1 = Broker(mds_db1, CompositeRegistry(_fs_config_db1))
+#     def register_datum(self, resource_uid, datum_kwargs, validate=False):
+
+#         if validate:
+#             raise RuntimeError('validate not implemented yet')
+
+#         res_uid = resource_uid
+#         datum_count = datum_counts[res_uid]
+
+#         datum_uid = res_uid + '/' + str(datum_count)
+#         datum_counts[res_uid] = datum_count + 1
+
+#         col = self._datum_col
+#         datum = self._insert_datum(col, resource_uid, datum_uid, datum_kwargs, {}, None)
+#         ret = datum['datum_id']
+
+#         return ret
+
+#     def _doc_or_uid_to_uid(self, doc_or_uid):
+
+#         if not isinstance(doc_or_uid, six.string_types):
+#             try:
+#                 doc_or_uid = doc_or_uid['uid']
+#             except TypeError:
+#                 pass
+
+#         return doc_or_uid
+
+#     def _bulk_insert_datum(self, col, resource, datum_ids,
+#                            datum_kwarg_list):
+
+#         resource_id = self._doc_or_uid_to_uid(resource)
+
+#         to_write = []
+
+#         d_uids = deque()
+
+#         for d_id, d_kwargs in zip(datum_ids, datum_kwarg_list):
+#             dm = dict(resource=resource_id,
+#                       datum_id=str(d_id),
+#                       datum_kwargs=dict(d_kwargs))
+#             apply_to_dict_recursively(dm, sanitize_np)
+#             to_write.append(pymongo.InsertOne(dm))
+#             d_uids.append(dm['datum_id'])
+
+#         col.bulk_write(to_write, ordered=False)
+
+#         return d_uids
+
+#     def bulk_register_datum_table(self, resource_uid, dkwargs_table, validate=False):
+
+#         res_uid = resource_uid['uid']
+#         datum_count = datum_counts[res_uid]
+
+#         if validate:
+#             raise RuntimeError('validate not implemented yet')
+
+#         d_ids = [res_uid + '/' + str(datum_count+j) for j in range(len(dkwargs_table))]
+#         datum_counts[res_uid] = datum_count + len(dkwargs_table)
+
+#         dkwargs_table = pd.DataFrame(dkwargs_table)
+#         datum_kwarg_list = [ dict(r) for _, r in dkwargs_table.iterrows()]
+
+#         method_name = "bulk_register_datum_table"
+
+#         self._bulk_insert_datum(self._datum_col, resource_uid, d_ids, datum_kwarg_list)
+#         return d_ids
+
+
+# mds_db1 = MDS(_mds_config_db1, auth=False)
+# db1 = Broker(mds_db1, CompositeRegistry(_fs_config_db1))
 
 # wrapper for two databases
 class CompositeBroker(Broker):
@@ -323,14 +324,14 @@ class CompositeBroker(Broker):
         ts =  str(datetime.now().timestamp())
 
         if name in {'bulk_events'}:
-            ret2 = self._insert(name, doc, db1.mds._event_col, ts)
+            ret2 = self._insert(name, doc, self.mds._event_col, ts)
         elif name == 'event_page':
             import event_model
             for ev_doc in event_model.unpack_event_page(doc):
-                db1.insert('event', ev_doc)
+                super().insert('event', ev_doc)
             ret2 = None
         else:
-            ret2 = db1.insert(name, doc)
+            ret2 = super().insert(name, doc)
         return ret2
 
 logger = logging.getLogger(__name__)
@@ -390,15 +391,28 @@ class HDF5DatasetSliceHandler(HandlerBase):
         self._file.close()
         self._file = None
 
+def HXN_compose_db(reg=Registry):
+    mds_db1 = MDS(_mds_config_db1, auth=False)
+    db = CompositeBroker(mds_db1, reg(_fs_config_db1))
+    db.name = 'hxn'
 
+    try:
+        from .handlers import register
+        register(db)
+    except:
+        pass
 
-mds_db1 = MDS(_mds_config_db1, auth=False)
-db1 = Broker(mds_db1, CompositeRegistry(_fs_config_db1))
-db = CompositeBroker(mds_db1, CompositeRegistry(_fs_config_db1))
-db.name = 'hxn'
+    return db
 
-try:
-    from hxntools.handlers import register
-    register(db)
-except:
-    pass
+# mds_db1 = MDS(_mds_config_db1, auth=False)
+# db1 = Broker(mds_db1, CompositeRegistry(_fs_config_db1))
+# db = CompositeBroker(mds_db1, CompositeRegistry(_fs_config_db1))
+# db.name = 'hxn'
+
+db = HXN_compose_db()
+
+# try:
+#     from hxntools.handlers import register
+#     register(db)
+# except:
+#     pass
