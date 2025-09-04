@@ -1,13 +1,13 @@
+from .hxn_handler import HXNHandlerBase
 from databroker.assets.handlers import HandlerBase
 import h5py
-class SISHDF5Handler(HandlerBase):
+
+class SISHDF5Handler(HXNHandlerBase):
     HANDLER_NAME = "SIS_HDF51_FLY_STREAM_V1"
 
     def __init__(self, resource_fn, *, frame_per_point):
         self._frame_per_point = frame_per_point
-        if resource_fn.startswith('/data'):
-            resource_fn = '/nsls2/data/hxn/legacy' + resource_fn[5:]
-        self._handle = h5py.File(resource_fn, "r", libver='latest', swmr=True)
+        super().__init__(resource_fn)
 
     def __call__(self, *, column, point_number):
         n_first = point_number * self._frame_per_point
@@ -20,14 +20,12 @@ class SISHDF5Handler(HandlerBase):
     #     self._handle.close()
     #     self._handle = None
     #     super().close()
-class BulkMerlinStream(HandlerBase):
+class BulkMerlinStream(HXNHandlerBase):
     HANDLER_NAME = 'MERLIN_FLY_STREAM_V2'
 
     def __init__(self, resource_fn, *, frame_per_point):
         self._frame_per_point = frame_per_point
-        if resource_fn.startswith('/data'):
-            resource_fn = '/nsls2/data/hxn/legacy' + resource_fn[5:]
-        self._handle = h5py.File(resource_fn, "r", libver='latest', swmr=True)
+        super().__init__(resource_fn)
 
     def __call__(self, point_number):
         n_first = point_number * self._frame_per_point
@@ -39,14 +37,12 @@ class BulkMerlinStream(HandlerBase):
     def dataset(self):
         return self._handle['entry/instrument/detector/data']
 
-class ZebraHDF5Handler(HandlerBase):
+class ZebraHDF5Handler(HXNHandlerBase):
     HANDLER_NAME = "ZEBRA_HDF51_FLY_STREAM_V1"
 
     def __init__(self, resource_fn, *, frame_per_point):
         self._frame_per_point = frame_per_point
-        if resource_fn.startswith('/data'):
-            resource_fn = '/nsls2/data/hxn/legacy' + resource_fn[5:]
-        self._handle = h5py.File(resource_fn, "r", libver='latest', swmr=True)
+        super().__init__(resource_fn)
 
     def __call__(self, *, column, point_number):
         n_first = point_number * self._frame_per_point
