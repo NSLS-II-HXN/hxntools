@@ -339,35 +339,34 @@ class HxnZebra(Zebra):
         scan_type = self.mode_settings.scan_type.get()
         if scan_type == 'fly':
             # PMAC motion script outputs 0 during exposure
-            # * Gate 1 - active low devices (low during exposure)
+            # IN3_OC is high voltage when PMAC outputs 0
+
+            # Gate 1 - active low devices (low during exposure)
             self.gate[1].input1.addr.put(ZebraAddresses.IN3_OC)
             self.gate[1].input2.addr.put(ZebraAddresses.IN3_OC)
             self.gate[1].set_input_edges(ZebraInputEdge.FALLING,
                                          ZebraInputEdge.RISING)
 
-            # Pulse 1 - modulate pulse width for Eiger trigger
+            # Pulse 1 - modulate pulse width capable (not fully configured)
             self.pulse[1].input_addr.put(ZebraAddresses.IN3_OC)
             self.pulse[1].delay.put(0)
             self.pulse[1].time_units.put('s')
 
-            # Pulse 2 - 1ms pulse for scaler 1 gate
+            # Pulse 2 - 1ms pulse at exposure start
             self.pulse[2].input_addr.put(ZebraAddresses.IN3_OC)
             self.pulse[2].delay.put(0)
             self.pulse[2].input_edge.put(0)
             self.pulse[2].width.put(0.001)
             self.pulse[2].time_units.put('s')
 
-            # Pulse 3 - 1ms pulse for scaler 1 inhibit
+            # Pulse 3 - 1ms pulse at exposure end
             self.pulse[3].input_addr.put(ZebraAddresses.IN3_OC)
             self.pulse[3].delay.put(0)
             self.pulse[3].input_edge.put(1)
             self.pulse[3].width.put(0.001)
             self.pulse[3].time_units.put('s')
 
-            # Output 1 - timepix (OR merlin, see below)
-            # self.output[1].ttl.addr.put(ZebraAddresses.GATE1)
-
-            # * Gate 2 - Active high (high during exposure)
+            # Gate 2 - Active high (high during exposure)
             self.gate[2].input1.addr.put(ZebraAddresses.IN3_OC)
             self.gate[2].input2.addr.put(ZebraAddresses.IN3_OC)
             self.gate[2].set_input_edges(ZebraInputEdge.RISING,
@@ -375,16 +374,12 @@ class HxnZebra(Zebra):
 
             # Output 1 - merlin and dexela and eiger
             self.output[1].ttl.addr.put(ZebraAddresses.GATE2)
-            #self.output[1].ttl.addr.put(ZebraAddresses.PULSE1)
 
-            # Output 2 - scaler 1 inhibit
+            # Output 2 - scaler gate and inhibit (inhibit at low voltage)
             self.output[2].ttl.addr.put(ZebraAddresses.GATE2)
-            #self.output[2].ttl.addr.put(ZebraAddresses.DISCONNECT)
-            #self.output[2].ttl.addr.put(ZebraAddresses.PULSE1)
 
-            # Output 3 - scaler 1 gate
+            # Output 3 - to PandABOX input 3
             self.output[3].ttl.addr.put(ZebraAddresses.GATE2)
-            #self.output[3].ttl.addr.put(ZebraAddresses.PULSE1)
 
             # Output 4 - xspress 3
             self.output[4].ttl.addr.put(ZebraAddresses.GATE2)
@@ -395,13 +390,10 @@ class HxnZebra(Zebra):
         elif scan_type == 'step':
             # Scaler triggers all detectors
             # Scaler, output mode 1, LNE (output 5) connected to Zebra IN1_TTL
-            # Pulse 1 has pulse width set to the count_time
+            # IN1_TTL is low when counting
 
-            # OUT1_TTL Merlin / dexela
-            # OUT2_TTL Scaler 1 inhibit
-            #
-            # OUT3_TTL Scaler 1 gate
-            # OUT4_TTL Xspress3
+            # Pulse 1 triggers at IN1_TTL falling (scaler counting starts)
+            # Pulse 1 has pulse width set to the count_time
             self.pulse[1].input_addr.put(ZebraAddresses.IN1_TTL)
 
             count_time = self.count_time.get()
@@ -409,32 +401,34 @@ class HxnZebra(Zebra):
                 logger.debug('Step scan pulse-width is %s', count_time)
                 self.pulse[1].width.put(count_time)
                 self.pulse[1].time_units.put('s')
-
             self.pulse[1].delay.put(0.0)
             self.pulse[1].input_edge.put(ZebraInputEdge.FALLING)
 
             # To be used in regular scaler mode, scaler 1 has to have
-            # inhibit cleared and counting enabled:
+            # inhibit cleared (inhibit at high) and counting enabled:
+            # SOFT_INPUT4 - Always high
             self.soft_input4.put(1)
 
-            # Timepix
-            # self.output[1].ttl.addr.put(ZebraAddresses.PULSE1)
-
-            # Output 1 - merlin and dexela and eiger
-            self.output[1].ttl.addr.put(ZebraAddresses.PULSE1)
-
-            self.output[2].ttl.addr.put(ZebraAddresses.SOFT_IN4)
-
+            # Gate 2 - Active high (high during exposure)
             self.gate[2].input1.addr.put(ZebraAddresses.PULSE1)
             self.gate[2].input2.addr.put(ZebraAddresses.PULSE1)
             self.gate[2].set_input_edges(ZebraInputEdge.RISING,
                                          ZebraInputEdge.FALLING)
 
+            # Output 1 - merlin and dexela and eiger
+            self.output[1].ttl.addr.put(ZebraAddresses.PULSE1)
+
+            # Output 2 - scaler gate and inhibit (inhibit at low voltage)
+            self.output[2].ttl.addr.put(ZebraAddresses.SOFT_IN4)
+
+            # Output 3 - to PandABOX input 3
             self.output[3].ttl.addr.put(ZebraAddresses.SOFT_IN4)
+
+            # Output 4 - xspress 3
             self.output[4].ttl.addr.put(ZebraAddresses.GATE2)
 
-            # Merlin LVDS
-            self.output[1].lvds.addr.put(ZebraAddresses.PULSE1)
+            # # Merlin LVDS
+            # self.output[1].lvds.addr.put(ZebraAddresses.PULSE1)
         else:
             raise ValueError('Unknown scan type for external triggering: '
                              '{}'.format(scan_type))
