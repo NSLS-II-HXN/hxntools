@@ -95,4 +95,4 @@ __enamlcache__/
 target/
 
 # setuptools_scm
-hxntools/_version.py
+src/hxntools/_version.py

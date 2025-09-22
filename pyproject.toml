@@ -51,7 +51,8 @@ Changelog = "https://github.com/NSLS-II-HXN/hxntools/releases"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-exclude = ["docs*", "tests*"]
+where = ["src"]
+include = ["hxntools"]
 
 [tool.setuptools_scm]
-write_to = "hxntools/_version.py"
+write_to = "src/hxntools/_version.py"
