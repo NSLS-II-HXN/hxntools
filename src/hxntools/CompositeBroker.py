@@ -264,7 +264,6 @@ def _write_to_file(col_name, method_name, t1, t2):
 # wrapper for two databases
 class CompositeBroker(Broker):
     """wrapper for two databases"""
-
     # databroker.headersource.MDSROTemplate
     def _bulk_insert_events(self, event_col, descriptor, events, validate, ts):
 
@@ -410,6 +409,9 @@ def HXN_compose_db(reg=Registry):
 # db.name = 'hxn'
 
 db = HXN_compose_db()
+
+def get_path(scan_id,key_name,db=db):
+    return db.reg.get_spec_handler(db[scan_id].table(fields=[key_name])[key_name][1].split('/')[0]).filename
 
 # try:
 #     from hxntools.handlers import register
