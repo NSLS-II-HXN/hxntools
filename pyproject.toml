@@ -52,7 +52,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["hxntools"]
+include = ["hxntools*"]
 
 [tool.setuptools_scm]
 write_to = "src/hxntools/_version.py"
