@@ -93,3 +93,6 @@ __enamlcache__/
 
 # PyBuilder
 target/
+
+# setuptools_scm
+src/hxntools/_version.py
