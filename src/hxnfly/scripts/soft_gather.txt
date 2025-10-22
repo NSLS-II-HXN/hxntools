@@ -1,0 +1,11 @@
+gather.enable=0
+gather.addr[0]=Sys.ServoCount.a
+gather.addr[1]=Sys.M[100].a
+gather.addr[2]=Motor[{motor_x:d}].Pos.a
+gather.addr[3]=Motor[{motor_y:d}].Pos.a
+gather.addr[4]=Motor[{motor_z:d}].Pos.a
+gather.items=5
+gather.Period={period:d}
+gather.enable=1
+gather.enable=0
+gather.MaxSamples=Gather.MaxLines

@@ -1,0 +1,31 @@
+<--- bluesky     python/ppmac------->
+                 
+                     fly.FlyBase 
+                         |       
+                     fly.FlyScan 
+                         |       
+bs.FlyPlan         fly1d.Fly1D   
+     |                   |
+bs.FlyPlan1D <-   fly_zp.Fly1D_ZP
+
+
+Where the flyscan class is determined from fly_class_from_motor, based on the
+motor passed in.
+
+... clear as mud!
+
+
+So in the environment, you have a scan defined:
+    callable_scan = bs.FlyScan1D()
+user calls:
+    callable_scan(motor, *user_args, **user_kwargs)
+bs.FlyScan.__call__ checks the motor to see which module it belongs to, assume
+for now it's a zoneplate module fine sample stage axis. fly_zp.Fly1D_ZP is
+then created:
+    callable_scan.flyer = fly_zp.Fly1D_ZP(**callable_scan.init_kw)
+flyer.configure sets up the describe fields, macros for the script, calls
+flyer._new_scan and sends the generated script to the ppmac.
+
+The bluesky run-engine eventually iterates over the callable_scan._gen 
+set of messages - configuring, opening runs, creating checkpoints, kicking off
+the flyscan subscans, and collecting data from them.

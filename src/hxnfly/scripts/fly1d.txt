@@ -1,0 +1,86 @@
+gather.enable=0
+gather.addr[0]=Sys.ServoCount.a
+gather.addr[1]=%(card_chan)s.Equ.a
+gather.addr[2]=Motor[3].Pos.a
+gather.addr[3]=Motor[4].Pos.a
+gather.addr[4]=%(card_chan)s.PhaseCapt.a
+gather.addr[5]=%(card_chan)s.CompA.a
+gather.addr[6]=%(card_chan)s.CompB.a
+gather.items=7
+gather.Period=8
+gather.enable=1
+gather.enable=0
+gather.MaxSamples=gather.maxlines
+
+linear
+TA(%(distance)f / %(feed_rate)f)
+TS0
+F(%(feed_rate)f)
+inc
+%(axis_name)s0.01
+dwell 0
+%(axis_name)s-0.01
+dwell 0
+
+
+abs
+// %(axis_name)s%(start_pos)f
+// dwell 0
+
+// Ensure motors are at the starting position
+
+// from CompA: (factor off by 2?)
+//    Gate3[i].Chan[j].CompA specifies the raw encoder position at which a
+//    position-compare event will take place, toggling the EQUn compare output for
+//    the channel. It is in units of 1/4096 of a “count” (i.e. with 12 bits of
+//    fraction) of the encoder decode circuit for the channel, with
+//    Gate3[i].Chan[j].EncCtrl defining how that decode is done. The position is
+//    relative to the power- on/reset position. If this encoder is the position
+//    feedback encoder for a motor, its position is offset from the motor position
+//    by the amount in Motor[x].HomePos, which is the encoder position at the motor
+//    home (zero) position.
+
+// Scale factor (TODO scale factor difference?)
+L1 = Motor[%(axis_mnum)d].PosSf / 8192.0
+// Position A (relative to motor position)
+L2 = 0.02
+// Position B (relative to motor position)
+L3 = L2 - %(dead_dist)f
+// Increment
+L4 = %(compare_incr)f
+// Current position
+L5 = %(card_chan)s.PhaseCapt
+
+%(card_chan)s.CompA = rint(L5 + (L2 / L1))
+%(card_chan)s.CompB = rint(L5 + (L3 / L1))
+%(card_chan)s.CompAdd = rint(L4 / L1)
+
+gather.enable=2
+
+// equ1ena isn't actually enable - it picks whether to use chan0 or chan i's
+// encoder for the comparison
+// %(card_chan)s.Equ1Ena = 1
+
+// // force equ to 1:
+// %(card_chan)s.equwrite = 3
+// force equ to 0:
+%(card_chan)s.equwrite = 1
+
+linear
+inc
+TA(%(distance)f / %(feed_rate)f)
+TS0
+F(%(feed_rate)f)
+%(axis_name)s(%(distance)f)
+dwell 0
+
+%(card_chan)s.CompA = %(card_chan)s.PhaseCapt + 10
+%(card_chan)s.CompB = %(card_chan)s.PhaseCapt + 10
+%(card_chan)s.CompAdd = 0
+
+// force equ to 0:
+%(card_chan)s.equwrite = 1
+
+dwell 50
+
+gather.enable=0

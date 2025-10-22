@@ -1,0 +1,123 @@
+// Move time extended to slowest motor:
+Coord[{coord_sys:d}].RapidVelCtrl=1
+
+Q1 = 0
+
+rapid
+linear
+inc
+TS0
+TA0.1
+TS0.0
+F({feed_rates[0]:f})
+X0.001
+Y0.001
+dwell 0
+
+// TODO: it seems that this won't work on the first move in the coordinate
+//       system:
+dwell 1.0
+abs
+F1.0
+
+L1 = {scan_starts[0]:f}
+{axis_names[0]}(L1) {axis_names[1]}({scan_starts[1]:f})
+
+dwell 0
+dwell 1000
+
+linear
+inc
+TS0
+TA0.5
+TS0.0
+F({feed_rates[0]:f})
+
+//  Counting off, inhibit on
+M100=1
+
+// Ensure motors are at the starting position
+dwell 0
+
+dwell 50
+
+gather.enable=2
+
+dwell 1
+
+L2=0
+Q2=0
+while(L2 < {points[1]:d}) {{
+    linear
+    inc
+    F({feed_rates[0]:f})
+    L1=0
+    while(L1 < {points[0]:d}) {{
+        // Inhibit off, start counting
+        M100=0
+
+        if ((L2 % 2) == 0) {{
+            {axis_names[0]}({per_points[0]:f})
+        }} else {{
+            {axis_names[0]}(-{per_points[0]:f})
+        }}
+
+        // Ensure the position is reached:
+        dwell 0
+
+        // Inhibit on, counting off
+        M100=1
+
+        // dwell for the dead time
+        dwell {dead_time:f}
+        
+        L1=L1+1
+        Q2=Q2+1
+    }}
+
+    if (L2 < ({points[1]:d} - 1)) {{
+        // rapid
+        linear
+        abs
+        F{return_speed:f}
+        L4 = {scan_starts[1]:f} + ({per_points[1]:f} * (L2 + 1))
+        
+        if ((L2 % 2) == 0) {{
+            L3 = {scan_ends[0]:f}
+        }} else {{
+            L3 = {scan_starts[0]:f}
+        }}
+
+        {axis_names[0]}(L3) {axis_names[1]}(L4)
+
+        dwell 0
+        dwell 150
+    }}
+    
+    L2=L2+1
+
+    if (Gather.Samples >= {sync_samples:d}) {{
+        Q1 = 1
+        gather.enable=0
+        while (Q1 == 1) {{
+            dwell 1
+        }}
+        Q1 = 10 * L2
+        gather.samples = 0
+        gather.enable=2
+    }}
+}}
+
+linear
+abs
+F{return_speed:f}
+{axis_names[0]}({final_pos[0]:f})
+{axis_names[1]}({final_pos[1]:f})
+dwell 0
+
+gather.enable=0
+
+// NOTE: can't use scaler in regular mode while still in input mode 2,
+// so re-enable counting after it's all done:
+// Inhibit off, start counting
+M100=0

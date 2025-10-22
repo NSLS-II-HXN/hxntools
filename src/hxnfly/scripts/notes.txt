@@ -1,0 +1,56 @@
+=== Zebra configuration ===
+
+Using the Quantum Detectors Zebra as a trigger generator:
+
+ In3  (OC  ): open collector input is PPMAC I/O 0 (M100)
+
+ Out1 (norm): Timepix or Merlin
+ Out2 (norm): scaler1 inhibit
+ Out3 (inv ): scaler1 gate
+ Out4 (inv ): xspress3
+
+There's a 1nF capacitor on the OC input to the Zebra due to noise issues
+causing double triggers
+
+=== Scaler configuration ===
+
+SIS3820 channel advance=external, --> input mode 2 <--
+
+ Input 1: External next pulse <-- connect to i/o 0 (M100)
+ Input 2: External user bit 1
+ Input 3: Inhibit counting    <-- connect to inverted output
+ Input 4: Inhibit next pulse
+
+ scaler only accepts 'load next event' -- this means that it's not a true
+ gate input, and 2 signals are necessary -- LNE and inhibit counting.
+
+Output mode 1, LNE output 5 connected to zebra TTL in 1 (step scan mode)
+
+Post-scan, M100 is returned to 0 to re-enable counting on the scaler and to
+have its final event be loaded into memory
+
+=== Move modes ===
+
+Can potentially use different move modes in the motion scripts if different
+trajectories are desirable:
+
+0 Linear mode: trapezoidal/triangular profiles, straight-line paths in Cartesian space
+  Circle mode: sinusoidal velocity profiles, arc paths in Cartesian space
+1 Spline mode: parabolic velocity profiles, cubic B-spline paths
+2 PVT mode: parabolic velocity profiles, Hermite-spline paths
+3 Rapid mode: trapezoidal/triangular profiles, minimum-time point-to-point moves
+
+
+=== TODO ===
+1. First move in the coordinate system seemed to be bugged before; is this
+   still the case? If it's no longer an issue, a move or two can be removed in
+   each motion script
+2. `dwell 0` should allow a motor to move to its final position within all of
+   the deadband, settling time, and other settings, however it doesn't seem 
+   to work perfectly. Need to tweak values.
+3. Eventually all of these scripts should live permanently on the motion
+   controller - as in be part of the configuration. When that's done, they
+   won't need to be transferred before each scan (though the overhead is low
+   for this, I think).
+4. Modify all scripts to do a check a variable for beam status (e.g., Q2)
+5. 

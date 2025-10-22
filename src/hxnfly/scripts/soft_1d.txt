@@ -1,0 +1,58 @@
+// Move time extended to slowest motor:
+Coord[{coord_sys:d}].RapidVelCtrl=1
+
+dwell 100
+
+//  Counting off, inhibit on
+M100=1
+
+// Ensure motors are at the starting position
+dwell 0
+
+gather.enable=2
+
+dwell 1
+
+inc
+F({feed_rate:f})
+// Loop counter L1
+L1=0
+// Scan progress indicator Q2
+Q2=0
+while(L1 < {points:d}) {{
+    linear
+    inc
+    F({feed_rate:f})
+
+    // Inhibit off, start counting
+    M100=0
+
+    {axis_name:s}({per_point:f})
+
+    // Ensure the position is reached:
+    dwell 0
+
+    // Inhibit on, counting off
+    M100=1
+
+    // dwell for the dead time
+    dwell {dead_time:f}
+    
+    L1=L1+1
+    Q2=L1
+}}
+
+linear
+abs
+F0.5
+F({return_speed:f})
+{axis_name:s}({final_pos:f})
+
+dwell 50
+
+gather.enable=0
+
+// NOTE: can't use scaler in regular mode while still in input mode 2,
+// so re-enable counting after it's all done:
+// Inhibit off, start counting
+M100=0

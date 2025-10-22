@@ -1,0 +1,2 @@
+//  Counting off, inhibit on
+M100=1
