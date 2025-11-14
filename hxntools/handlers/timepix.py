@@ -47,7 +47,7 @@ class HDF5DatasetSliceHandler(HandlerBase):
         if self._file:
             return
 
-        self._file = h5py.File(self._filename, 'r')
+        self._file = h5py.File(self._filename, 'r', libver='latest', swmr=True, locking=False)
 
     def close(self):
         super(HDF5DatasetSliceHandler, self).close()
