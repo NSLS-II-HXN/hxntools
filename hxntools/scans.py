@@ -148,7 +148,7 @@ def count(dets, num=1, delay=None, time=None, *, md=None):
 def absolute_scan(dets, motor, start, finish, intervals, time=None, *,
                   md=None):
     yield from _pre_scan(dets, total_points=intervals + 1, count_time=time)
-    return (yield from plans.scan(dets, motor, start, finish, intervals, md=md))
+    return (yield from plans.scan(dets, motor, start, finish, intervals + 1, md=md))
 
 
 @functools.wraps(plans.relative_scan)

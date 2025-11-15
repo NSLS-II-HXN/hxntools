@@ -73,8 +73,8 @@ class HxnXspressTrigger(HxnModalBase, BlueskyInterface):
         if self._staged != Staged.yes:
             raise RuntimeError("not staged")
         self._status = DeviceStatus(self)
-        self.settings.erase.put(1)
-        self._acquisition_signal.put(1, wait=False)
+        # self.settings.erase.put(1)
+        self._acquisition_signal.put(1, wait=True)
         self._dispatch_channels(trigger_time=time.time())
         return self._status
 
@@ -84,8 +84,8 @@ class HxnXspressTrigger(HxnModalBase, BlueskyInterface):
 
         self._status = DeviceStatus(self)
         self._status._finished()
-        # if self.mode_settings.scan_type.get() != 'fly':
-        #    self._dispatch_channels(trigger_time=time.time())
+        if self.mode_settings.scan_type.get() != 'fly':
+            self._dispatch_channels(trigger_time=time.time())
             # fly-scans take care of dispatching on their own
 
         return self._status
