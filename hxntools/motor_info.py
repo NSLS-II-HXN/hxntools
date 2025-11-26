@@ -1,9 +1,9 @@
-motor_table = {'zpssx':('inenc2_val',-1e-4*0.9542,'/INENC2.VAL.Value'), #-9.7e-5),
+motor_table = {'zpssx':('inenc2_val',-1e-4*0.9542,'/INENC2.VAL.Value'), #-9.7e-5), # Additional correction ratio here should match with changes to the CapSensorVtoUM scaling factor in Power PMAC config files to ensure scan input and readback positions match.
             'zpssy':('inenc3_val',-1.03297e-4,'/INENC3.VAL.Value'), #-1.006e-4),
             'zpssz':('inenc4_val',1e-4,'/INENC4.VAL.Value'), #1.04e-4),
             'dssx':('inenc2_val',-1e-4,'/INENC2.VAL.Value'),
             'dssy':('inenc3_val',1e-4,'/INENC3.VAL.Value'),
-            'dssz':('inenc4_val',1.04712e-4,'/INENC4.VAL.Value'),
+            'dssz':('inenc4_val',1e-4*1.047,'/INENC4.VAL.Value'), # See above comment for correction ratio.
 
             'pt_tomo_ssx':('inenc2_val',1e-4,'/INENC2.VAL.Value'),
             'pt_tomo_ssy':('inenc3_val',-1e-4,'/INENC3.VAL.Value')
