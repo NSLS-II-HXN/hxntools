@@ -48,6 +48,15 @@ class PandAHandlerHDF5(HXNHandlerBase):
         ds = self._handle[f"/{field}"]
         return ds[:]
 
+class DexelaHandlerHDF5(HXNHandlerBase):
+    """The handler to read HDF5 files produced by PandABox."""
+    HANDLER_NAME = "DEX_HDF5"
+
+    def __call__(self, frame):
+        ds = self._handle['entry/instrument/detector/data']
+        ds.id.refresh()
+        return ds[frame,:,:]
+
 
 
 def register(db):
@@ -59,3 +68,5 @@ def register(db):
                             ROIHDF5Handler, overwrite=True)
     db.reg.register_handler(PandAHandlerHDF5.HANDLER_NAME,
                             PandAHandlerHDF5, overwrite=True)
+    db.reg.register_handler(DexelaHandlerHDF5.HANDLER_NAME,
+                            DexelaHandlerHDF5, overwrite=True)

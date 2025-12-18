@@ -4,7 +4,6 @@ from databroker.assets.mongo import Registry
 from databroker.headersource.core import doc_or_uid_to_uid
 from databroker.assets.handlers import HandlerBase
 from jsonschema import validate as js_validate
-from bluesky_kafka import Publisher
 from collections import deque
 
 import numpy as np
