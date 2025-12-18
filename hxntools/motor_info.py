@@ -5,8 +5,14 @@ motor_table = {'zpssx':('inenc2_val',-1e-4*0.9542,'/INENC2.VAL.Value'), #-9.7e-5
             'dssy':('inenc3_val',1e-4,'/INENC3.VAL.Value'),
             'dssz':('inenc4_val',1e-4*1.047,'/INENC4.VAL.Value'), # See above comment for correction ratio.
 
-            'pt_tomo_ssx':('inenc2_val',1e-4,'/INENC2.VAL.Value'),
-            'pt_tomo_ssy':('inenc3_val',-1e-4,'/INENC3.VAL.Value')
+            # ss* stages' position readout cannot be collected by PandABox encoder inputs, make the position 1 here and calculate with softwaer instead
+            'ssx':('inenc2_val',1e-4,'/INENC2.VAL.Value'),
+            'ssy':('inenc3_val',1e-4,'/INENC3.VAL.Value'),
+            'ssz':('inenc4_val',1e-4,'/INENC4.VAL.Value'), # See above comment for correction ratio.
+
+            # pt_tomo_ssx conversion ratio prior to Nov. 2025 was set to -1*current value because the image recorded from eiger1_mobile detector was not mirrored
+            'pt_tomo_ssx':('inenc2_val',-1e-4,'/INENC2.VAL.Value'),
+            'pt_tomo_ssy':('inenc4_val',-1e-4,'/INENC4.VAL.Value')
 
             # Stage encoder
             #'pt_tomo_ssy':('inenc4_val',6e-5)

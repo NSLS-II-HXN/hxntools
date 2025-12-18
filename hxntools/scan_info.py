@@ -415,7 +415,6 @@ def get_scan_positions(header,use_scan_input = False):
                     sinput = header.start['scan']['scan_input']
                     pos0 = pos0 + (sinput[0] + sinput[1])/2 - np.mean(pos0)
                     pos1 = pos1 + (sinput[3] + sinput[4])/2 - np.mean(pos1)
-                return pos0,pos1
             else:
                 load0 = motor_table[motors[0]]
                 pos0 = np.array(list(header.data(load0[0]))).squeeze()*load0[1]
@@ -427,8 +426,22 @@ def get_scan_positions(header,use_scan_input = False):
                 if use_scan_input:
                     sinput = header.start['scan']['scan_input']
                     pos0 = pos0 + (sinput[0] + sinput[1])/2 - np.mean(pos0)
+
+            if motors[0].startswith('ss'): # ss* stages' position readout cannot be connected to PandABox encoder, using calculated positions intead
+                sinput = header.start['scan']['scan_input']
+                pos0 = np.tile(np.linspace(sinput[0],sinput[1],int(sinput[2])+1)[:-1],[int(sinput[5]),1]).reshape((int(sinput[2]*sinput[5]),))
+            if len(motors)>1 and motors[1].startswith('ss'): # ss* stages' position readout cannot be connected to PandABox encoder, using calculated positions intead
+                sinput = header.start['scan']['scan_input']
+                pos1 = np.tile(np.linspace(sinput[3],sinput[4],int(sinput[5])+1)[:-1],[int(sinput[2]),1]).T.reshape((int(sinput[2]*sinput[5]),))
+
+            if len(motors) == 2:
+                return pos0,pos1
+            else:
                 return pos0
+
         except:
+            import traceback
+            traceback.print_exc()
             print('Unable to load motor %s,%s'%(motors[0],motors[1]))
             return []
 
