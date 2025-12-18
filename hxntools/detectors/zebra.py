@@ -375,13 +375,13 @@ class HxnZebra(Zebra):
             # Output 1 - merlin and dexela and eiger
             self.output[1].ttl.addr.put(ZebraAddresses.GATE2)
 
-            # Output 2 - scaler gate and inhibit (inhibit at low voltage)
+            # Output 2 - to scaler gate and inhibit (inhibit at low), now using PandABOX relay with delay instead
             self.output[2].ttl.addr.put(ZebraAddresses.GATE2)
 
-            # Output 3 - to PandABOX input 3
+            # Output 3 - to PandABOX input 3 to scaler gate and inhibit
             self.output[3].ttl.addr.put(ZebraAddresses.GATE2)
 
-            # Output 4 - xspress 3
+            # Output 4 - xspress 3 and prototype table eiger
             self.output[4].ttl.addr.put(ZebraAddresses.GATE2)
 
             # Merlin LVDS
