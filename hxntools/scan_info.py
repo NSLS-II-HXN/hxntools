@@ -429,7 +429,10 @@ def get_scan_positions(header,use_scan_input = False):
 
             if motors[0].startswith('ss'): # ss* stages' position readout cannot be connected to PandABox encoder, using calculated positions intead
                 sinput = header.start['scan']['scan_input']
-                pos0 = np.tile(np.linspace(sinput[0],sinput[1],int(sinput[2])+1)[:-1],[int(sinput[5]),1]).reshape((int(sinput[2]*sinput[5]),))
+                if len(sinput) < 6:
+                    pos0 = np.linspace(sinput[0],sinput[1],int(sinput[2])+1)[:-1]
+                else:
+                    pos0 = np.tile(np.linspace(sinput[0],sinput[1],int(sinput[2])+1)[:-1],[int(sinput[5]),1]).reshape((int(sinput[2]*sinput[5]),))
             if len(motors)>1 and motors[1].startswith('ss'): # ss* stages' position readout cannot be connected to PandABox encoder, using calculated positions intead
                 sinput = header.start['scan']['scan_input']
                 pos1 = np.tile(np.linspace(sinput[3],sinput[4],int(sinput[5])+1)[:-1],[int(sinput[2]),1]).T.reshape((int(sinput[2]*sinput[5]),))
