@@ -38,14 +38,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install .
-          python -c "import hxntools; print('✓ hxntools imported successfully')"
+          python -c "import hxntools; print(f'✓ hxntools imported successfully (editable): {hxntools.__file__}')"
           python -c "from importlib.metadata import version; print(f'✓ Version: {version(\"hxntools\")}')"
+          python -m pip list | grep hxntools
           python -m pip uninstall -y hxntools
+
       - name: Test editable installation
         run: |
           python -m pip install -e .
-          python -c "import hxntools; print('✓ hxntools imported successfully (editable)')"
+          python -c "import hxntools; print(f'✓ hxntools imported successfully (editable): {hxntools.__file__}')"
           python -c "from importlib.metadata import version; print(f'✓ Version: {version(\"hxntools\")} (editable)')"
+          python -m pip list | grep hxntools
+
       - name: Test package modules import
         run: |
           python -c "
