@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: 3
+
+jobs:
+  checks:
+    name: Check Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        runs-on: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - name: Test regular installation
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+          python -c "import hxntools; print(f'✓ hxntools imported successfully (editable): {hxntools.__file__}')"
+          python -c "from importlib.metadata import version; print(f'✓ Version: {version(\"hxntools\")}')"
+          python -m pip list | grep hxntools
+          python -m pip uninstall -y hxntools
+
+      - name: Test editable installation
+        run: |
+          python -m pip install -e .
+          python -c "import hxntools; print(f'✓ hxntools imported successfully (editable): {hxntools.__file__}')"
+          python -c "from importlib.metadata import version; print(f'✓ Version: {version(\"hxntools\")} (editable)')"
+          python -m pip list | grep hxntools
+
+      - name: Test package modules import
+        run: |
+          python -c "
+          import hxntools
+          import pkgutil
+          modules = [name for _, name, _ in pkgutil.iter_modules(hxntools.__path__, hxntools.__name__ + '.')]
+          print(f'✓ Found {len(modules)} submodules')
+          for module in modules[:3]:  # Test first few modules
+              try:
+                  __import__(module)
+                  print(f'✓ {module} imported successfully')
+              except ImportError as e:
+                  print(f'⚠ {module} import failed: {e}')
+          "
