@@ -125,7 +125,7 @@ class TransformPluginV2(PluginBase):
     https://github.com/areaDetector/ADCore/commit/b39ddac4a4a8d14997b94052e45ce47d72ec3ae8
     '''
     _default_suffix = 'Trans1:'
-    _suffix_re = 'Trans\d:'
+    _suffix_re = r'Trans\d:'
     _html_docs = ['NDPluginTransform.html']
     _plugin_type = 'NDPluginTransform'
 
